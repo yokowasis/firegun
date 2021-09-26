@@ -66,6 +66,10 @@ class Firegun {
         });        
     }
 
+    /**
+     * 
+     * @param {object} pair Login with SEA Key Pair
+     */
      async loginPair (pair) {
         this.gun.user().auth(pair,(s=>{
             return new Promise(function (resolve) {
@@ -73,7 +77,15 @@ class Firegun {
         }));
     }
     
-    async userNew (username, password) {
+    /**
+     * 
+     * Create a new user and Log him in
+     * 
+     * @param {string} username 
+     * @param {string} password 
+     * @returns 
+     */
+    async userNew (username = "", password = "") {
         return new Promise((resolve)=>{
             this.gun.user().create(username,password,async (s)=>{
                 if (s && s.err) {
@@ -87,6 +99,15 @@ class Firegun {
         })        
     }
 
+    /**
+     * 
+     * Log a user in
+     * 
+     * @param {string} username 
+     * @param {string} password 
+     * @param {number} repeat time to repeat the login before give up. Because the nature of decentralization, just because the first time login is failed, doesn't mean the user / password pair doesn't exist in the network
+     * @returns 
+     */
     async userLogin (username, password, repeat=2) {
         return new Promise((resolve)=>{
             this.gun.user().auth(username,password,async (s)=>{
@@ -108,11 +129,22 @@ class Firegun {
         });
     }
 
+    /**
+     * Log the user out
+     */
     async userLogout () {
         this.gun.user().leave();
         this.user = {};
     }
 
+    /**
+     * 
+     * Fetch data from userspace
+     * 
+     * @param {striong} path 
+     * @param {number} repeat time to repeat fetching before returning undefined
+     * @returns 
+     */
     async userGet (path,repeat = 1,prefix=this.prefix) {
         if (this.gun.user().is) {
            path = `~${this.user.pair.pub}/${path}`
@@ -122,6 +154,14 @@ class Firegun {
         }
     }
 
+    /**
+     * 
+     * Fetching data
+     * 
+     * @param {string} path 
+     * @param {number} repeat time to repeat fetching before returning undefined
+     * @returns 
+     */
     async Get (path,repeat = 1,prefix=this.prefix) {
         let path0 = path;
         let paths = path;
@@ -150,6 +190,14 @@ class Firegun {
         });
     }
 
+    /**
+     * 
+     * Put data on userspace
+     * 
+     * @param {string} path 
+     * @param {object} data 
+     * @returns 
+     */
     async userPut (path,data,prefix=this.prefix) {
         if (this.gun.user().is) {
             path = `~${this.user.pair.pub}/${path}`
@@ -159,6 +207,14 @@ class Firegun {
          } 
     }
 
+    /**
+     * 
+     * Put Data
+     * 
+     * @param {string} path 
+     * @param {object} data      
+     * @returns 
+     */
     async Put (path,data,prefix=this.prefix) {
         path = `${prefix}${path}`;
         let paths = path
