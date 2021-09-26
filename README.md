@@ -1,47 +1,47 @@
 # Firegun
 - [Firegun](#firegun)
-  - [Why the Name?](#why-the-name)
-  - [What is it ?](#what-is-it-)
-  - [Quickstart](#quickstart)
-    - [Installation](#installation)
-    - [Include the module](#include-the-module)
-    - [Initialization](#initialization)
-    - [Do](#do)
-    - [API Reference](#api-reference)
-      - [Public Space](#public-space)
-        - [Get](#get)
-        - [Put](#put)
-      - [Userspace](#userspace)
-        - [Create new User (it logged them in automatically)](#create-new-user-it-logged-them-in-automatically)
-        - [Login User](#login-user)
-        - [Login User](#login-user-1)
-        - [Get Data from User Space](#get-data-from-user-space)
-        - [Put Data to User Space](#put-data-to-user-space)
-      - [SEASpace](#seaspace)
-        - [Put Permanent Readonly Content](#put-permanent-readonly-content)
-        - [Generate KeyPair](#generate-keypair)
-        - [Login to Userspace with KeyPair](#login-to-userspace-with-keypair)
-## Why the Name?
+- [Why the Name?](#why-the-name)
+- [What is it ?](#what-is-it-)
+- [Quickstart](#quickstart)
+  - [Installation](#installation)
+  - [Include the module](#include-the-module)
+  - [Initialization](#initialization)
+  - [Do](#do)
+- [API Reference](#api-reference)
+  - [Public Space](#public-space)
+    - [Get](#get)
+    - [Put](#put)
+  - [Userspace](#userspace)
+    - [Create new User (it logged them in automatically)](#create-new-user-it-logged-them-in-automatically)
+    - [Login User](#login-user)
+    - [Logout User](#logout-user)
+    - [Get Data from User Space](#get-data-from-user-space)
+    - [Put Data to User Space](#put-data-to-user-space)
+  - [SEASpace](#seaspace)
+    - [Put Permanent Readonly Content](#put-permanent-readonly-content)
+    - [Generate KeyPair](#generate-keypair)
+    - [Login to Userspace with KeyPair](#login-to-userspace-with-keypair)
+# Why the Name?
 Because it's inspired by fireship youtube video, and I am trying to replace Firestore with GunDB (Decentralized Database)
 
-## What is it ?
+# What is it ?
 It's a wrapper for gunDB. gunDB is great, but sometimes the docs is confusing.
 
-## Quickstart
-### Installation
+# Quickstart
+## Installation
 ```
 npm i gun @yokowasis/firegun
 ```
 
-### Include the module
+## Include the module
 ```
 import { Firegun } from '@yokowasis/firegun'
 ```
-### Initialization
+## Initialization
 ```
 let fg = new Firegun();
 ```
-### Do
+## Do
 ```
 var data = {
     "Hello" : "World"
@@ -53,50 +53,50 @@ let success = await fg.Put("data/dummy",data);
 //Retrieve Some Data
 let retrieveData = await fg.Get("data/dummy");
 ```
-### API Reference
-#### Public Space
-##### Get
+# API Reference
+## Public Space
+### Get
 ```
 let data = await fg.Get("path/to/the/things")
 ```
-##### Put
+### Put
 ```
 let success = await fg.Put("path/to/the/things",{
     "hello" : "world"
 })
 ```
-#### Userspace
+## Userspace
 **What is it ?**
 It's a space for user. The data written in this way is readonly for the public.
-##### Create new User (it logged them in automatically)
+### Create new User (it logged them in automatically)
 ```
 await fg.userNew ("username", "password")
 console.log (fg.user)
 ```
-##### Login User
+### Login User
 ```
 await fg.userLogin ("username", "password")
 console.log (fg.user)
 ```
-##### Login User
+### Logout User
 ```
 await fg.userLogout ()
 console.log (fg.user)
 ```
-##### Get Data from User Space
+### Get Data from User Space
 ```
 let data = await fg.userGet ("mydata")
 ```
-##### Put Data to User Space
+### Put Data to User Space
 ```
 let success = await fg.userPut ("mydata",{
     "Hello" : "Userspace"
 })
 ```
-#### SEASpace
+## SEASpace
 **What is it?** It's like the UserSpace, but without the username / password
 
-##### Put Permanent Readonly Content 
+### Put Permanent Readonly Content 
 ```
 //Key Must begin with "#"
 let success = fg.addContentAdressing ("#permanentStuff",{
@@ -112,12 +112,12 @@ let success = await fg.Put("#permanentStuff",{
 })
 //will fail
 ```
-##### Generate KeyPair
+### Generate KeyPair
 **What is it for ?** it's to create a user without username / password.
 ```
 let keyPair = await fg.generatePair();
 ```
-##### Login to Userspace with KeyPair
+### Login to Userspace with KeyPair
 ```
 await fg.loginPair (keyPair);
 console.log (fg.user);
