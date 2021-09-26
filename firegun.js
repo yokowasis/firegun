@@ -5,6 +5,7 @@ require('gun/lib/radix');
 require('gun/lib/radisk');
 require('gun/lib/store');
 require('gun/lib/rindexed');
+require('gun/lib/utils')
 
 class Firegun {
     constructor(peers = [],dbname="fireDB", localstorage=false,prefix="",axe=false,port=8765) {
@@ -217,9 +218,8 @@ class Firegun {
      */
     async Put (path,data,prefix=this.prefix) {
         path = `${prefix}${path}`;
-        let paths = path
+        let paths = path.split("/");
         let dataGun = this.gun;
-        paths = paths.split("/");
 
         paths.forEach(path => {
             dataGun = dataGun.get(path);

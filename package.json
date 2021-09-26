@@ -13,5 +13,11 @@
     ],
     "dependencies": {
         "gun": "^0.2020.1235"
+    },
+    "scripts": {
+        "test": "jest --verbose --watch"
+    },
+    "devDependencies": {
+        "jest": "^27.2.2"
     }
 }
