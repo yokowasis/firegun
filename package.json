@@ -1,0 +1,14 @@
+{
+    "name": "@yokowasis/firegun",
+    "version": "1.0.1",
+    "description": "gunDB Wrapper for easy access and use.",
+    "license": "MIT",
+    "repository": "yokowasis/firegun",
+    "main": "firegun.js",
+    "keywords": [
+        "gundb",
+        "npm",
+        "package",
+        "firegun"
+    ]
+}
