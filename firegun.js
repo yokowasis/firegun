@@ -164,10 +164,10 @@ class Firegun {
      */
     async Get (path,repeat = 1,prefix=this.prefix) {
         let path0 = path;
-        let paths = path;
-        let dataGun = this.gun;
         path = `${prefix}${path}`;
+        let paths = path;
         paths = paths.split("/");
+        let dataGun = this.gun;
         
         paths.forEach(path => {
             dataGun = dataGun.get(path);
@@ -232,6 +232,34 @@ class Firegun {
         return new Promise((resolve)=>{
             dataGun.put(data,(s)=>{
                 resolve(s);
+            })
+        });
+    }
+
+    Load (path,repeat = 1,prefix=this.prefix) {
+        let path0 = path;
+        path = `${prefix}${path}`;
+        let paths = path;
+        paths = paths.split("/");
+        let dataGun = this.gun
+        
+        paths.forEach(path => {
+            dataGun = dataGun.get(path);
+        });
+        
+        return new Promise((resolve, reject) => {
+            dataGun.load(async (s)=>{
+                if (s) {
+                    s = JSON.parse(JSON.stringify(s));
+                    resolve(s);
+                } else {
+                    if (repeat) {
+                        await (timeout(1000))
+                        resolve (await R.Load(path0,repeat-1,prefix));
+                    } else {
+                        resolve (s);
+                    }
+                }            
             })
         });
     }

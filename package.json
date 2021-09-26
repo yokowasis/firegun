@@ -10,5 +10,8 @@
         "npm",
         "package",
         "firegun"
-    ]
+    ],
+    "dependencies": {
+        "gun": "^0.2020.1235"
+    }
 }
