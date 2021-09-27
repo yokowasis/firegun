@@ -1,5 +1,5 @@
 const { Firegun } = require("../firegun");
-const fg = new Firegun([],"firedb",true);
+const fg = new Firegun([],"firedb",true,null,false,8767);
 
 function randomIntFromInterval(min, max) { // min and max included 
   return Math.floor(Math.random() * (max - min + 1) + min);
