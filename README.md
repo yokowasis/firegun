@@ -10,12 +10,15 @@
 - [API Reference](#api-reference)
   - [Public Space](#public-space)
     - [Get](#get)
+    - [Load](#load)
     - [Put](#put)
+    - [Put](#put-1)
   - [Userspace](#userspace)
     - [Create new User (it logged them in automatically)](#create-new-user-it-logged-them-in-automatically)
     - [Login User](#login-user)
     - [Logout User](#logout-user)
     - [Get Data from User Space](#get-data-from-user-space)
+    - [Get Data from User Space](#get-data-from-user-space-1)
     - [Put Data to User Space](#put-data-to-user-space)
   - [SEASpace](#seaspace)
     - [Put Permanent Readonly Content](#put-permanent-readonly-content)
@@ -59,6 +62,17 @@ let retrieveData = await fg.Get("data/dummy");
 ```
 let data = await fg.Get("path/to/the/things")
 ```
+### Load
+```
+// Load Multi Nested Data
+let data = await fg.Load("path/to/the/things")
+```
+### Put
+```
+let success = await fg.Put("path/to/the/things",{
+    "hello" : "world"
+})
+```
 ### Put
 ```
 let success = await fg.Put("path/to/the/things",{
@@ -86,6 +100,11 @@ console.log (fg.user)
 ### Get Data from User Space
 ```
 let data = await fg.userGet ("mydata")
+```
+### Get Data from User Space
+```
+//Load Multi Nested Data
+let data = await fg.userLoad ("mydata")
 ```
 ### Put Data to User Space
 ```
