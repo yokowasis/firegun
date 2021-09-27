@@ -1,10 +1,12 @@
 const Gun = require("gun");
+const { isCompositeComponent } = require("react-dom/test-utils");
 require('gun/sea');
 require('gun/lib/load');
 require('gun/lib/radix');
 require('gun/lib/radisk');
 require('gun/lib/store');
 require('gun/lib/rindexed');
+require('gun/lib/utils')
 
 class Firegun {
     constructor(peers = [],dbname="fireDB", localstorage=false,prefix="",axe=false,port=8765) {
@@ -155,6 +157,22 @@ class Firegun {
     }
 
     /**
+     * Load Multi Nested Data From Userspace
+     * @param {*} path 
+     * @param {*} repeat 
+     * @param {*} prefix 
+     * @returns 
+     */
+    async userLoad (path,repeat = 1,prefix=this.prefix) {
+        if (this.gun.user().is) {
+           path = `~${this.user.pair.pub}/${path}`
+           return (await this.Load(path,repeat,prefix));
+        } else {
+            return undefined;
+        }
+    }
+
+    /**
      * 
      * Fetching data
      * 
@@ -164,10 +182,10 @@ class Firegun {
      */
     async Get (path,repeat = 1,prefix=this.prefix) {
         let path0 = path;
-        let paths = path;
-        let dataGun = this.gun;
         path = `${prefix}${path}`;
+        let paths = path;
         paths = paths.split("/");
+        let dataGun = this.gun;
         
         paths.forEach(path => {
             dataGun = dataGun.get(path);
@@ -217,9 +235,8 @@ class Firegun {
      */
     async Put (path,data,prefix=this.prefix) {
         path = `${prefix}${path}`;
-        let paths = path
+        let paths = path.split("/");
         let dataGun = this.gun;
-        paths = paths.split("/");
 
         paths.forEach(path => {
             dataGun = dataGun.get(path);
@@ -232,6 +249,32 @@ class Firegun {
         return new Promise((resolve)=>{
             dataGun.put(data,(s)=>{
                 resolve(s);
+            })
+        });
+    }
+
+    async Load (path,repeat = 1,prefix=this.prefix) {
+        return new Promise((resolve, reject) => {
+            let promises = [];
+            let obj = {};
+            this.Get(path,repeat,prefix)
+            .then(s=>{
+                for (const key in s) {
+                    if ( key != "_" && key != "#" && key != ">" ) {
+                        const element = s[key];
+                        if (typeof element === "object") {       
+                            promises.push(this.Load(`${path}/${key}`).then(s=>{
+                                obj[key] = s;
+                            }));
+                        } else {
+                            obj[key] = element;
+                        }
+                    }
+                }
+                Promise.allSettled(promises)
+                .then(s=>{
+                    resolve(obj);
+                })
             })
         });
     }
