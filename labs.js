@@ -1,28 +1,25 @@
+//@ts-check
 const {Firegun} = require('./firegun');
 
-const fg = new Firegun(undefined,undefined,true);
+const fg = new Firegun([""],"fireDB",true);
 
 (async()=>{
-    fg.Put("test",{
-        a : {
-            "sub" : "sub-a",
-            "sub-sub" : {
-                "1level" : "deep",
-                "2level" : "deep",
-                "3level" : "deep",
-                "4level" : {
-                    "go" : "LOADDDDD",
-                    "5level" : {
-                        "yes" : "LOADDDDD"
-                    }
-                }
-            }
+    fg.Put("hello",{
+        "Normal" : "String",
+        "Normal2" : "String",
+        "Normal3" : "String",
+        "Level1" : {
+            "Level1String" : "String"
         },
-        e : "Hello-e",
-        f : "Hello-f"
+        "Level2" : {
+            "Level2String" : "String",
+            "Level3" : {
+                "Level3String" : "String"
+            }    
+        }
     })
-    fg.Load("test")
+    fg.Load("hello")
     .then(s=>{
-        console.log (s.a['sub-sub']);
+        console.log(s);
     })
 })()

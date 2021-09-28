@@ -1,15 +1,30 @@
+//@ts-check
+
 const Gun = require("gun");
-const { isCompositeComponent } = require("react-dom/test-utils");
 require('gun/sea');
 require('gun/lib/load');
 require('gun/lib/radix');
 require('gun/lib/radisk');
 require('gun/lib/store');
 require('gun/lib/rindexed');
-require('gun/lib/utils')
 
 class Firegun {
-    constructor(peers = [],dbname="fireDB", localstorage=false,prefix="",axe=false,port=8765) {
+    /**
+     * 
+     * --------------------------------------
+     * Create Firegun Instance
+     * 
+     * @param {string[]} peers - Peers url
+     * @param {string} [dbname="fireDB"] - Database Name
+     * @param {boolean} [localstorage = false] Method of saving the database. 
+     * - localStorage : true 
+     * - indexedDB : false
+     * @param {string} [prefix=""] Database Prefix
+     * @param {boolean} [axe=false] Do You want to use Axe Support ?
+     * @param {number} [port=8765] Multicast Port
+     */
+
+    constructor(peers = [""],dbname="fireDB", localstorage=false,prefix="",axe=false,port=8765) {
 
         this.prefix = prefix;
 
@@ -22,6 +37,7 @@ class Firegun {
             },
             peers : peers
         })
+
         this.user = {
             alias : "",
             pair : {
@@ -39,19 +55,22 @@ class Firegun {
 
     
     /**
+     * ----------------------------------
      * Insert CONTENT-ADDRESSING Readonly Data.
-     * Sebenarnya bisa tambah lagi searchable path dengan RAD, 
+     * 
+     * dev note : Sebenarnya bisa tambah lagi searchable path dengan RAD, 
      * hanya saja RAD masih Memiliki BUG, dan tidak bekerja secara consistent
      * @param {string} key must begin with #
-     * @param {string} data string or object. If object, it will be stringified automatically
-     * 
+     * @param {(string | {})} data If object, it will be stringified automatically
+     * @returns {Promise<({err:Error,ok:any}|{err:undefined,ok:string})>}
      */
-     async addContentAdressing (key="#",data = "") {
+     async addContentAdressing (key,data) {
         if (typeof data === "object") {
             data = JSON.stringify(data);
         }
         let hash = await Gun.SEA.work(data, null, null, {name: "SHA-256"});
         return new Promise((resolve) => {
+            // @ts-ignore
             this.gun.get(`${key}`).get(hash).put(data,(s)=>{
                 resolve(s);
             });
@@ -60,7 +79,7 @@ class Firegun {
     
     /**
      * Generate Key PAIR from SEA module
-     * @returns 
+     * @returns {Promise<{pub:string,priv:string,epub:string,epriv:string}>}
      */
     async generatePair () {
         return new Promise(async function (resolve) {
@@ -70,13 +89,29 @@ class Firegun {
 
     /**
      * 
-     * @param {object} pair Login with SEA Key Pair
+     * @param {{pub : string, epub : string, priv : string, epriv : string}} pair Login with SEA Key Pair
+     * @returns {Promise<({err:Error}|{alias:string,pair:{priv:string,pub:string,epriv:string,epub:string}})>}
      */
      async loginPair (pair) {
-        this.gun.user().auth(pair,(s=>{
-            return new Promise(function (resolve) {
-            });
-        }));
+
+        return new Promise((resolve)=>{
+            // @ts-ignore
+            this.gun.user().auth(pair,(s=>{
+                // @ts-ignore
+                if (s.err) {
+                    // @ts-ignore
+                    resolve (s.err)
+                } else {
+                    this.user = {
+                        //@ts-ignore
+                        alias : s.put.alias,
+                        //@ts-ignore
+                        pair : s.sea,
+                    }
+                    resolve(this.user);
+                }
+            }));
+        });
     }
     
     /**
@@ -85,16 +120,18 @@ class Firegun {
      * 
      * @param {string} username 
      * @param {string} password 
-     * @returns 
+     * @returns {Promise<{err : string}|{alias: string,pair: {priv: string,pub: string,epriv: string,epub: string}}>}
      */
     async userNew (username = "", password = "") {
         return new Promise((resolve)=>{
             this.gun.user().create(username,password,async (s)=>{
+                //@ts-ignore
                 if (s && s.err) {
+                    // @ts-ignore
                     resolve(s);
                 } else {
                     this.gun.user().leave();
-                    this.user = await this.userLogin(username,password)
+                    this.user = await this.userLogin(username,password);
                     resolve(this.user);    
                 }
             });
@@ -108,21 +145,24 @@ class Firegun {
      * @param {string} username 
      * @param {string} password 
      * @param {number} repeat time to repeat the login before give up. Because the nature of decentralization, just because the first time login is failed, doesn't mean the user / password pair doesn't exist in the network
-     * @returns 
+     * @returns {Promise.<{alias: string,pair: {priv: string,pub: string,epriv: string,epub: string}}>}
      */
     async userLogin (username, password, repeat=2) {
         return new Promise((resolve)=>{
             this.gun.user().auth(username,password,async (s)=>{
+                //@ts-ignore
                 if (s && s.err) {
                     if (repeat>0) {
                         await this._timeout(1000);
                         resolve (await this.userLogin(username,password,repeat-1));
                     } else {
+                        //@ts-ignore
                         resolve(s);
                     }                    
                 } else {
                     this.user = {
                         alias : username,
+                        //@ts-ignore
                         pair : s.sea,
                     }
                     resolve(this.user);    
@@ -136,18 +176,20 @@ class Firegun {
      */
     async userLogout () {
         this.gun.user().leave();
-        this.user = {};
+        this.user = undefined;
     }
 
     /**
      * 
      * Fetch data from userspace
      * 
-     * @param {striong} path 
-     * @param {number} repeat time to repeat fetching before returning undefined
-     * @returns 
+     * @param {string} path 
+     * @param {number} [repeat=1] time to repeat fetching before returning undefined
+     * @param {string} [prefix=""] Database Prefix
+     * @returns {Promise<{}>}
      */
     async userGet (path,repeat = 1,prefix=this.prefix) {
+        // @ts-ignore
         if (this.gun.user().is) {
            path = `~${this.user.pair.pub}/${path}`
            return (await this.Get(path,repeat,prefix));
@@ -158,12 +200,13 @@ class Firegun {
 
     /**
      * Load Multi Nested Data From Userspace
-     * @param {*} path 
-     * @param {*} repeat 
-     * @param {*} prefix 
-     * @returns 
+     * @param {string} path 
+     * @param {number} [repeat=1] time to repeat fetching before returning undefined
+     * @param {string} [prefix=""] Database Prefix
+     * @returns {Promise<{}>}
      */
     async userLoad (path,repeat = 1,prefix=this.prefix) {
+        // @ts-ignore
         if (this.gun.user().is) {
            path = `~${this.user.pair.pub}/${path}`
            return (await this.Load(path,repeat,prefix));
@@ -177,14 +220,14 @@ class Firegun {
      * Fetching data
      * 
      * @param {string} path 
-     * @param {number} repeat time to repeat fetching before returning undefined
-     * @returns 
+     * @param {number} [repeat=1] time to repeat fetching before returning undefined
+     * @param {string} [prefix=""] Database Prefix
+     * @returns {Promise<{}>}
      */
     async Get (path,repeat = 1,prefix=this.prefix) {
         let path0 = path;
         path = `${prefix}${path}`;
-        let paths = path;
-        paths = paths.split("/");
+        let paths = path.split("/");
         let dataGun = this.gun;
         
         paths.forEach(path => {
@@ -213,10 +256,11 @@ class Firegun {
      * Put data on userspace
      * 
      * @param {string} path 
-     * @param {object} data 
-     * @returns 
+     * @param {(string | object)} data 
+     * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>}
      */
     async userPut (path,data,prefix=this.prefix) {
+        // @ts-ignore
         if (this.gun.user().is) {
             path = `~${this.user.pair.pub}/${path}`
             return (await this.Put(path,data,prefix));
@@ -225,13 +269,27 @@ class Firegun {
          } 
     }
 
+    async newPut (path,data = {},prefix=this.prefix) {
+        for (const key in data) {
+            if (Object.hasOwnProperty.call(data, key)) {
+                const element = data[key];
+                if (typeof element === "object") {
+                    this.newPut(`${path}/${key}`,element)
+                } else {
+                    this.newPut(`${path}/${key}`,element)
+                }
+            }
+        }
+    }
+
     /**
-     * 
-     * Put Data
+     * ----------------------------
+     * Put Data to the gunDB Node
      * 
      * @param {string} path 
-     * @param {object} data      
-     * @returns 
+     * @param {(string|object)} data      
+     * @param {string} [prefix=""]      
+     * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>} Promise
      */
     async Put (path,data,prefix=this.prefix) {
         path = `${prefix}${path}`;
@@ -244,15 +302,36 @@ class Firegun {
 
         if (typeof data === "undefined") {
             data = { "t" : "_" }
-        }    
-    
+        }
+        let promises = [];
+        for (const key in data) {
+            if (Object.hasOwnProperty.call(data, key)) {
+                const element = data[key];
+                if (typeof element === "object") {
+                    delete data[key];
+                    promises.push(this.Put(`${path}/${key}`,element))
+                }
+            }
+        }
+        
         return new Promise((resolve)=>{
-            dataGun.put(data,(s)=>{
-                resolve(s);
+            Promise.allSettled(promises)
+            .then(s=>{
+                // console.log(s);
+                dataGun.put(data,(ack)=>{
+                    resolve(ack);
+                })    
             })
         });
     }
 
+    /**
+     * Load Multi Nested Data
+     * @param {string} path 
+     * @param {number} [repeat=1] time to repeat fetching before returning undefined
+     * @param {string} [prefix=""] Database Prefix
+     * @returns 
+     */
     async Load (path,repeat = 1,prefix=this.prefix) {
         return new Promise((resolve, reject) => {
             let promises = [];
