@@ -37,6 +37,7 @@ class Firegun {
             },
             peers : peers
         })
+
         this.user = {
             alias : "",
             pair : {
@@ -61,7 +62,7 @@ class Firegun {
      * hanya saja RAD masih Memiliki BUG, dan tidak bekerja secara consistent
      * @param {string} key must begin with #
      * @param {(string | {})} data If object, it will be stringified automatically
-     * 
+     * @returns {Promise<({err:Error,ok:any}|{err:undefined,ok:string})>}
      */
      async addContentAdressing (key,data) {
         if (typeof data === "object") {
@@ -78,7 +79,7 @@ class Firegun {
     
     /**
      * Generate Key PAIR from SEA module
-     * @returns 
+     * @returns {Promise<{pub:string,priv:string,epub:string,epriv:string}>}
      */
     async generatePair () {
         return new Promise(async function (resolve) {
@@ -89,13 +90,28 @@ class Firegun {
     /**
      * 
      * @param {{pub : string, epub : string, priv : string, epriv : string}} pair Login with SEA Key Pair
+     * @returns {Promise<({err:Error}|{alias:string,pair:{priv:string,pub:string,epriv:string,epub:string}})>}
      */
      async loginPair (pair) {
-        // @ts-ignore
-        this.gun.user().auth(pair,(s=>{
-            return new Promise(function (resolve) {
-            });
-        }));
+
+        return new Promise((resolve)=>{
+            // @ts-ignore
+            this.gun.user().auth(pair,(s=>{
+                // @ts-ignore
+                if (s.err) {
+                    // @ts-ignore
+                    resolve (s.err)
+                } else {
+                    this.user = {
+                        //@ts-ignore
+                        alias : s.put.alias,
+                        //@ts-ignore
+                        pair : s.sea,
+                    }
+                    resolve(this.user);
+                }
+            }));
+        });
     }
     
     /**
@@ -104,18 +120,18 @@ class Firegun {
      * 
      * @param {string} username 
      * @param {string} password 
-     * @returns 
+     * @returns {Promise<{err : string}|{alias: string,pair: {priv: string,pub: string,epriv: string,epub: string}}>}
      */
     async userNew (username = "", password = "") {
         return new Promise((resolve)=>{
             this.gun.user().create(username,password,async (s)=>{
-                // @ts-ignore
                 //@ts-ignore
                 if (s && s.err) {
+                    // @ts-ignore
                     resolve(s);
                 } else {
                     this.gun.user().leave();
-                    this.user = await this.userLogin(username,password)
+                    this.user = await this.userLogin(username,password);
                     resolve(this.user);    
                 }
             });
@@ -129,7 +145,7 @@ class Firegun {
      * @param {string} username 
      * @param {string} password 
      * @param {number} repeat time to repeat the login before give up. Because the nature of decentralization, just because the first time login is failed, doesn't mean the user / password pair doesn't exist in the network
-     * @returns 
+     * @returns {Promise.<{alias: string,pair: {priv: string,pub: string,epriv: string,epub: string}}>}
      */
     async userLogin (username, password, repeat=2) {
         return new Promise((resolve)=>{
@@ -140,6 +156,7 @@ class Firegun {
                         await this._timeout(1000);
                         resolve (await this.userLogin(username,password,repeat-1));
                     } else {
+                        //@ts-ignore
                         resolve(s);
                     }                    
                 } else {
@@ -169,7 +186,7 @@ class Firegun {
      * @param {string} path 
      * @param {number} [repeat=1] time to repeat fetching before returning undefined
      * @param {string} [prefix=""] Database Prefix
-     * @returns 
+     * @returns {Promise<{}>}
      */
     async userGet (path,repeat = 1,prefix=this.prefix) {
         // @ts-ignore
@@ -186,7 +203,7 @@ class Firegun {
      * @param {string} path 
      * @param {number} [repeat=1] time to repeat fetching before returning undefined
      * @param {string} [prefix=""] Database Prefix
-     * @returns 
+     * @returns {Promise<{}>}
      */
     async userLoad (path,repeat = 1,prefix=this.prefix) {
         // @ts-ignore
@@ -205,7 +222,7 @@ class Firegun {
      * @param {string} path 
      * @param {number} [repeat=1] time to repeat fetching before returning undefined
      * @param {string} [prefix=""] Database Prefix
-     * @returns 
+     * @returns {Promise<{}>}
      */
     async Get (path,repeat = 1,prefix=this.prefix) {
         let path0 = path;
@@ -240,7 +257,7 @@ class Firegun {
      * 
      * @param {string} path 
      * @param {(string | object)} data 
-     * @returns 
+     * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>}
      */
     async userPut (path,data,prefix=this.prefix) {
         // @ts-ignore
@@ -259,7 +276,7 @@ class Firegun {
      * @param {string} path 
      * @param {(string|object)} data      
      * @param {string} [prefix=""]      
-     * @returns 
+     * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>}
      */
     async Put (path,data,prefix=this.prefix) {
         path = `${prefix}${path}`;
