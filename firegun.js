@@ -1,15 +1,30 @@
+//@ts-check
+
 const Gun = require("gun");
-const { isCompositeComponent } = require("react-dom/test-utils");
 require('gun/sea');
 require('gun/lib/load');
 require('gun/lib/radix');
 require('gun/lib/radisk');
 require('gun/lib/store');
 require('gun/lib/rindexed');
-require('gun/lib/utils')
 
 class Firegun {
-    constructor(peers = [],dbname="fireDB", localstorage=false,prefix="",axe=false,port=8765) {
+    /**
+     * 
+     * --------------------------------------
+     * Create Firegun Instance
+     * 
+     * @param {string[]} peers - Peers url
+     * @param {string} [dbname="fireDB"] - Database Name
+     * @param {boolean} [localstorage = false] Method of saving the database. 
+     * - localStorage : true 
+     * - indexedDB : false
+     * @param {string} [prefix=""] Database Prefix
+     * @param {boolean} [axe=false] Do You want to use Axe Support ?
+     * @param {number} [port=8765] Multicast Port
+     */
+
+    constructor(peers = [""],dbname="fireDB", localstorage=false,prefix="",axe=false,port=8765) {
 
         this.prefix = prefix;
 
@@ -39,19 +54,22 @@ class Firegun {
 
     
     /**
+     * ----------------------------------
      * Insert CONTENT-ADDRESSING Readonly Data.
-     * Sebenarnya bisa tambah lagi searchable path dengan RAD, 
+     * 
+     * dev note : Sebenarnya bisa tambah lagi searchable path dengan RAD, 
      * hanya saja RAD masih Memiliki BUG, dan tidak bekerja secara consistent
      * @param {string} key must begin with #
-     * @param {string} data string or object. If object, it will be stringified automatically
+     * @param {(string | {})} data If object, it will be stringified automatically
      * 
      */
-     async addContentAdressing (key="#",data = "") {
+     async addContentAdressing (key,data) {
         if (typeof data === "object") {
             data = JSON.stringify(data);
         }
         let hash = await Gun.SEA.work(data, null, null, {name: "SHA-256"});
         return new Promise((resolve) => {
+            // @ts-ignore
             this.gun.get(`${key}`).get(hash).put(data,(s)=>{
                 resolve(s);
             });
@@ -70,9 +88,10 @@ class Firegun {
 
     /**
      * 
-     * @param {object} pair Login with SEA Key Pair
+     * @param {{pub : string, epub : string, priv : string, epriv : string}} pair Login with SEA Key Pair
      */
      async loginPair (pair) {
+        // @ts-ignore
         this.gun.user().auth(pair,(s=>{
             return new Promise(function (resolve) {
             });
@@ -90,6 +109,8 @@ class Firegun {
     async userNew (username = "", password = "") {
         return new Promise((resolve)=>{
             this.gun.user().create(username,password,async (s)=>{
+                // @ts-ignore
+                //@ts-ignore
                 if (s && s.err) {
                     resolve(s);
                 } else {
@@ -113,6 +134,7 @@ class Firegun {
     async userLogin (username, password, repeat=2) {
         return new Promise((resolve)=>{
             this.gun.user().auth(username,password,async (s)=>{
+                //@ts-ignore
                 if (s && s.err) {
                     if (repeat>0) {
                         await this._timeout(1000);
@@ -123,6 +145,7 @@ class Firegun {
                 } else {
                     this.user = {
                         alias : username,
+                        //@ts-ignore
                         pair : s.sea,
                     }
                     resolve(this.user);    
@@ -136,18 +159,20 @@ class Firegun {
      */
     async userLogout () {
         this.gun.user().leave();
-        this.user = {};
+        this.user = undefined;
     }
 
     /**
      * 
      * Fetch data from userspace
      * 
-     * @param {striong} path 
-     * @param {number} repeat time to repeat fetching before returning undefined
+     * @param {string} path 
+     * @param {number} [repeat=1] time to repeat fetching before returning undefined
+     * @param {string} [prefix=""] Database Prefix
      * @returns 
      */
     async userGet (path,repeat = 1,prefix=this.prefix) {
+        // @ts-ignore
         if (this.gun.user().is) {
            path = `~${this.user.pair.pub}/${path}`
            return (await this.Get(path,repeat,prefix));
@@ -158,12 +183,13 @@ class Firegun {
 
     /**
      * Load Multi Nested Data From Userspace
-     * @param {*} path 
-     * @param {*} repeat 
-     * @param {*} prefix 
+     * @param {string} path 
+     * @param {number} [repeat=1] time to repeat fetching before returning undefined
+     * @param {string} [prefix=""] Database Prefix
      * @returns 
      */
     async userLoad (path,repeat = 1,prefix=this.prefix) {
+        // @ts-ignore
         if (this.gun.user().is) {
            path = `~${this.user.pair.pub}/${path}`
            return (await this.Load(path,repeat,prefix));
@@ -177,14 +203,14 @@ class Firegun {
      * Fetching data
      * 
      * @param {string} path 
-     * @param {number} repeat time to repeat fetching before returning undefined
+     * @param {number} [repeat=1] time to repeat fetching before returning undefined
+     * @param {string} [prefix=""] Database Prefix
      * @returns 
      */
     async Get (path,repeat = 1,prefix=this.prefix) {
         let path0 = path;
         path = `${prefix}${path}`;
-        let paths = path;
-        paths = paths.split("/");
+        let paths = path.split("/");
         let dataGun = this.gun;
         
         paths.forEach(path => {
@@ -213,10 +239,11 @@ class Firegun {
      * Put data on userspace
      * 
      * @param {string} path 
-     * @param {object} data 
+     * @param {(string | object)} data 
      * @returns 
      */
     async userPut (path,data,prefix=this.prefix) {
+        // @ts-ignore
         if (this.gun.user().is) {
             path = `~${this.user.pair.pub}/${path}`
             return (await this.Put(path,data,prefix));
@@ -230,7 +257,8 @@ class Firegun {
      * Put Data
      * 
      * @param {string} path 
-     * @param {object} data      
+     * @param {(string|object)} data      
+     * @param {string} [prefix=""]      
      * @returns 
      */
     async Put (path,data,prefix=this.prefix) {
@@ -253,6 +281,13 @@ class Firegun {
         });
     }
 
+    /**
+     * Load Multi Nested Data
+     * @param {string} path 
+     * @param {number} [repeat=1] time to repeat fetching before returning undefined
+     * @param {string} [prefix=""] Database Prefix
+     * @returns 
+     */
     async Load (path,repeat = 1,prefix=this.prefix) {
         return new Promise((resolve, reject) => {
             let promises = [];
