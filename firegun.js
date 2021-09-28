@@ -269,14 +269,27 @@ class Firegun {
          } 
     }
 
+    async newPut (path,data = {},prefix=this.prefix) {
+        for (const key in data) {
+            if (Object.hasOwnProperty.call(data, key)) {
+                const element = data[key];
+                if (typeof element === "object") {
+                    this.newPut(`${path}/${key}`,element)
+                } else {
+                    this.newPut(`${path}/${key}`,element)
+                }
+            }
+        }
+    }
+
     /**
-     * 
-     * Put Data
+     * ----------------------------
+     * Put Data to the gunDB Node
      * 
      * @param {string} path 
      * @param {(string|object)} data      
      * @param {string} [prefix=""]      
-     * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>}
+     * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>} Promise
      */
     async Put (path,data,prefix=this.prefix) {
         path = `${prefix}${path}`;
@@ -289,11 +302,25 @@ class Firegun {
 
         if (typeof data === "undefined") {
             data = { "t" : "_" }
-        }    
-    
+        }
+        let promises = [];
+        for (const key in data) {
+            if (Object.hasOwnProperty.call(data, key)) {
+                const element = data[key];
+                if (typeof element === "object") {
+                    delete data[key];
+                    promises.push(this.Put(`${path}/${key}`,element))
+                }
+            }
+        }
+        
         return new Promise((resolve)=>{
-            dataGun.put(data,(s)=>{
-                resolve(s);
+            Promise.allSettled(promises)
+            .then(s=>{
+                // console.log(s);
+                dataGun.put(data,(ack)=>{
+                    resolve(ack);
+                })    
             })
         });
     }
