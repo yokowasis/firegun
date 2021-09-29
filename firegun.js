@@ -1,10 +1,13 @@
 const Gun = require("gun");
+const Crypto = require('crypto');
+ 
 require('gun/sea');
 require('gun/lib/load');
 require('gun/lib/radix');
 require('gun/lib/radisk');
 require('gun/lib/store');
 require('gun/lib/rindexed');
+
 
 class Firegun {
     /**
@@ -280,6 +283,22 @@ class Firegun {
         }
     }
 
+    async Set (path,data,prefix=this.prefix,opt={}) {
+        return new Promise(async (resolve, reject) => {
+            Crypto.randomBytes(30,(err, buffer) => {
+                var token = buffer.toString('hex');
+                this.Put(`${path}/${token}`,data,prefix,opt)
+                .then(s=>{
+                    if (s.err) {
+                        reject(s);                        
+                    } else {
+                        resolve(s);
+                    }
+                })
+            });        
+        });
+    }
+
     /**
      * ----------------------------
      * Put Data to the gunDB Node
@@ -370,38 +389,72 @@ class Chat {
     }
 
     async generatePublicCert() {        
-        let cert = await Gun.SEA.certify("*", [{ "*" : "chat-with"}], this.firegun.user.pair,null,{
-            blacklist : 'chat-blacklist'
+        let cert = await Gun.SEA.certify("*", [{ "*" : "chat-with","+" : "*"}], this.firegun.user.pair,null,{
+            // blacklist : 'chat-blacklist' //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
         });
         console.log (cert);
         this.firegun.userPut("chat-cert",cert);
     }
 
-    async send(pubkey,msg) {
-        let cert = await this.firegun.Get(`~${pubkey}/chat-cert`);
-        let currentdate = new Date(); 
-        let datetime =  currentdate.getDate() + "/"
-                        + (currentdate.getMonth()+1)  + "/" 
-                        + currentdate.getFullYear() + " @ "  
-                        + currentdate.getHours() + ":"  
-                        + currentdate.getMinutes() + ":" 
-                        + currentdate.getSeconds();
-       
-        
-        // userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
-        await 
-        this.firegun.Put(`~${pubkey}/chat-with/${this.firegun.user.pair.pub}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
-            "timestamp" : datetime, 
-            "msg" : msg, 
-            status : "sent"
-        },undefined,{
-            opt : {
-                cert : cert
+    /**
+     * 
+     * @param {{pub : string, epub? : string}} pubkey 
+     * @param {*} date 
+     */
+    async retrieve(pubkey, date=[]) {
+        let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
+        if (pubkey.epub) {
+            for (const key in data) {
+                if (Object.hasOwnProperty.call(data, key)) {
+                    data[key].msg = await Gun.SEA.decrypt(data[key].msg, await Gun.SEA.secret(pubkey.epub, this.firegun.user.pair));
+                }
+            }    
+        }
+        return data;
+    }
+
+    /**
+     * 
+     * Send Message
+     * 
+     * @param {{pub : string, epub?: string}} pairkey 
+     * @param {string} msg 
+     * @returns 
+     */
+    async send(pairkey,msg) {
+        return new Promise(async (resolve, reject) => {
+            if (pairkey.epub) {
+                msg = await Gun.SEA.encrypt(msg,await Gun.SEA.secret(pairkey.epub,this.firegun.user.pair));
             }
-        })
-        .then(s=>{
-            console.log(s);
-        })
+            let cert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
+            let currentdate = new Date(); 
+            let datetime =  currentdate.getDate() + "/"
+                            + (currentdate.getMonth()+1)  + "/" 
+                            + currentdate.getFullYear() + " @ "  
+                            + currentdate.getHours() + ":"  
+                            + currentdate.getMinutes() + ":" 
+                            + currentdate.getSeconds();
+           
+            
+            // userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
+            console.log (msg);
+            this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
+                "timestamp" : datetime, 
+                "msg" : msg, 
+                status : "sent"
+            },undefined,{
+                opt : {
+                    cert : cert
+                }
+            })
+            .then(s=>{
+                if (s.err) {
+                    reject(s);
+                } else {
+                    resolve(s);
+                }
+            })
+        });
     }
 
 }
