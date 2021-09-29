@@ -13,4 +13,7 @@ fg.userLogin("yokowasis","123123123")
     }
     let chats = await chat.retrieve(pairkey,["2021","9","29"]);
     console.log (chats);
+.then(s=>{
+    console.log (fg.user.pair)
+    chat.generatePublicCert()
 })
