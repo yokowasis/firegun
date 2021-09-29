@@ -399,7 +399,8 @@ class Chat {
     /**
      * 
      * @param {{pub : string, epub? : string}} pubkey 
-     * @param {*} date 
+     * @param {date?=[year:number,month:number,date:number]} date 
+     * @returns
      */
     async retrieve(pubkey, date=[]) {
         let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
@@ -415,11 +416,11 @@ class Chat {
 
     /**
      * 
-     * Send Message
+     * Send Chat Message
      * 
      * @param {{pub : string, epub?: string}} pairkey 
      * @param {string} msg 
-     * @returns 
+     * @returns {{ err : {}} | {ok : {"" : 1}}} GunAck
      */
     async send(pairkey,msg) {
         return new Promise(async (resolve, reject) => {
