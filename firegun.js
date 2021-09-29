@@ -1,5 +1,3 @@
-//@ts-check
-
 const Gun = require("gun");
 require('gun/sea');
 require('gun/lib/load');
@@ -289,9 +287,10 @@ class Firegun {
      * @param {string} path 
      * @param {(string|object)} data      
      * @param {string} [prefix=""]      
+     * @param {{}} [opt={}]
      * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>} Promise
      */
-    async Put (path,data,prefix=this.prefix) {
+    async Put (path,data,prefix=this.prefix,opt={}) {
         path = `${prefix}${path}`;
         let paths = path.split("/");
         let dataGun = this.gun;
@@ -320,7 +319,7 @@ class Firegun {
                 // console.log(s);
                 dataGun.put(data,(ack)=>{
                     resolve(ack);
-                })    
+                },opt)    
             })
         });
     }
@@ -359,4 +358,52 @@ class Firegun {
     }
 }
 
-module.exports = { Firegun }
+class Chat {
+
+    /**
+     * 
+     * @param {Firegun} firegun Firegun instance
+     */
+    constructor(firegun) {
+        this.firegun = firegun;
+        this.user = this.firegun.user;        
+    }
+
+    async generatePublicCert() {        
+        let cert = await Gun.SEA.certify("*", [{ "*" : "chat-with"}], this.firegun.user.pair,null,{
+            blacklist : 'chat-blacklist'
+        });
+        console.log (cert);
+        this.firegun.userPut("chat-cert",cert);
+    }
+
+    async send(pubkey,msg) {
+        let cert = await this.firegun.Get(`~${pubkey}/chat-cert`);
+        let currentdate = new Date(); 
+        let datetime =  currentdate.getDate() + "/"
+                        + (currentdate.getMonth()+1)  + "/" 
+                        + currentdate.getFullYear() + " @ "  
+                        + currentdate.getHours() + ":"  
+                        + currentdate.getMinutes() + ":" 
+                        + currentdate.getSeconds();
+       
+        
+        // userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
+        await 
+        this.firegun.Put(`~${pubkey}/chat-with/${this.firegun.user.pair.pub}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
+            "timestamp" : datetime, 
+            "msg" : msg, 
+            status : "sent"
+        },undefined,{
+            opt : {
+                cert : cert
+            }
+        })
+        .then(s=>{
+            console.log(s);
+        })
+    }
+
+}
+
+module.exports = { Firegun, Chat }
