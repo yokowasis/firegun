@@ -283,10 +283,19 @@ class Firegun {
         }
     }
 
+    /**
+     * 
+     * @param {string} path 
+     * @param {{}} data 
+     * @param {string?=""} prefix 
+     * @param {{ opt : { cert : string}}} opt for Certificatge
+     * @returns 
+     */
     async Set (path,data,prefix=this.prefix,opt={}) {
         return new Promise(async (resolve, reject) => {
             Crypto.randomBytes(30,(err, buffer) => {
                 var token = buffer.toString('hex');
+                data.id = token;
                 this.Put(`${path}/${token}`,data,prefix,opt)
                 .then(s=>{
                     if (s.err) {
