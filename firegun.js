@@ -295,8 +295,8 @@ class Firegun {
                         resolve(s);
                     }
                 })
-            });        
-        });
+            });       
+        })
     }
 
     /**
@@ -341,6 +341,26 @@ class Firegun {
                 },opt)    
             })
         });
+    }
+
+    async Del (path) {
+        return new Promise(async (resolve, reject) => {
+            Crypto.randomBytes(30,(err, buffer) => {
+                var token = buffer.toString('hex');
+                
+                this.Put(`${path}`,{
+                    "#" : token,
+                    "t" : "_"
+                })
+                .then(s=>{
+                    if (!s.err) {
+                        resolve (s.ok);
+                    } else {
+                        reject (s.err);
+                    }
+                })
+            });       
+        })        
     }
 
     /**
@@ -407,7 +427,11 @@ class Chat {
         if (pubkey.epub) {
             for (const key in data) {
                 if (Object.hasOwnProperty.call(data, key)) {
-                    data[key].msg = await Gun.SEA.decrypt(data[key].msg, await Gun.SEA.secret(pubkey.epub, this.firegun.user.pair));
+                    if (data[key]._self) {
+                        data[key].msg = await Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
+                    } else {
+                        data[key].msg = await Gun.SEA.decrypt(data[key].msg, await Gun.SEA.secret(pubkey.epub, this.firegun.user.pair));
+                    }                    
                 }
             }    
         }
@@ -420,12 +444,16 @@ class Chat {
      * 
      * @param {{pub : string, epub?: string}} pairkey 
      * @param {string} msg 
-     * @returns {{ err : {}} | {ok : {"" : 1}}} GunAck
+     * @returns {Promise<{{ err : {}} | {ok : {"" : 1}}}>}  GunAck
      */
     async send(pairkey,msg) {
         return new Promise(async (resolve, reject) => {
+            let msgToHim, msgToMe;
             if (pairkey.epub) {
-                msg = await Gun.SEA.encrypt(msg,await Gun.SEA.secret(pairkey.epub,this.firegun.user.pair));
+                msgToHim = await Gun.SEA.encrypt(msg,await Gun.SEA.secret(pairkey.epub,this.firegun.user.pair));
+                msgToMe = await Gun.SEA.encrypt(msg,this.firegun.user.pair);
+            } else {
+                msgToHim = msg
             }
             let cert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
             let currentdate = new Date(); 
@@ -436,24 +464,38 @@ class Chat {
                             + currentdate.getMinutes() + ":" 
                             + currentdate.getSeconds();
            
+
+            let promises = [];
+
+            // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
+            promises.push(
+                this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
+                    "_self" : false,
+                    "timestamp" : datetime, 
+                    "msg" : msgToHim, 
+                    status : "sent"
+                },undefined,{
+                    opt : {
+                        cert : cert
+                    }
+                })
+            );
+            // Put to My userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
+            promises.push(
+                this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
+                    "_self" : true,
+                    "timestamp" : datetime, 
+                    "msg" : msgToMe, 
+                    status : "sent"
+                })
+            )
             
-            // userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
-            console.log (msg);
-            this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
-                "timestamp" : datetime, 
-                "msg" : msg, 
-                status : "sent"
-            },undefined,{
-                opt : {
-                    cert : cert
-                }
-            })
+            Promise.all(promises)
             .then(s=>{
-                if (s.err) {
-                    reject(s);
-                } else {
-                    resolve(s);
-                }
+                resolve("OK");
+            })
+            .catch(err=>{
+                reject(err);
             })
         });
     }
