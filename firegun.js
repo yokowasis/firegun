@@ -94,19 +94,13 @@ class Firegun {
      * @returns {Promise<({err:Error}|{alias:string,pair:{priv:string,pub:string,epriv:string,epub:string}})>}
      */
      async loginPair (pair) {
-
-        return new Promise((resolve)=>{
-            // @ts-ignore
+        return new Promise((resolve,reject)=>{
             this.gun.user().auth(pair,(s=>{
-                // @ts-ignore
                 if (s.err) {
-                    // @ts-ignore
-                    resolve (s.err)
+                    reject (s.err)
                 } else {
                     this.user = {
-                        //@ts-ignore
-                        alias : s.put.alias,
-                        //@ts-ignore
+                        alias : "Anonymous",
                         pair : s.sea,
                     }
                     resolve(this.user);
@@ -417,9 +411,13 @@ class Chat {
         this.user = this.firegun.user;        
     }
 
-    async generatePublicCert() {        
+    async generatePublicCert() {
+        // BUG Blacklis Work Around
+        await this.firegun.userPut("chat-blaklist",{
+            "t" : "_"
+        })
         let cert = await Gun.SEA.certify("*", [{ "*" : "chat-with","+" : "*"}], this.firegun.user.pair,null,{
-            // blacklist : 'chat-blacklist' //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
+            block : 'chat-blacklist' //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
         });
         console.log (cert);
         this.firegun.userPut("chat-cert",cert);
