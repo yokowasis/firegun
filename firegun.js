@@ -419,7 +419,6 @@ class Chat {
         let cert = await Gun.SEA.certify("*", [{ "*" : "chat-with","+" : "*"}], this.firegun.user.pair,null,{
             block : 'chat-blacklist' //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
         });
-        console.log (cert);
         this.firegun.userPut("chat-cert",cert);
     }
 
@@ -507,6 +506,121 @@ class Chat {
         });
     }
 
+    /**
+     * 
+     * @param {{pub : string}} groupowner 
+     * @param {string} groupname 
+     * @param {string} msg 
+     * @returns 
+     */
+    async groupSend(groupowner,groupname,msg) {
+        return new Promise(async (resolve, reject) => {
+            let cert = await this.firegun.Get(`~${groupowner.pub}/chat-group/${groupname}/cert`);
+            let currentdate = new Date(); 
+            let datetime =  currentdate.getDate() + "/"
+                            + (currentdate.getMonth()+1)  + "/" 
+                            + currentdate.getFullYear() + " @ "  
+                            + currentdate.getHours() + ":"  
+                            + currentdate.getMinutes() + ":" 
+                            + currentdate.getSeconds();
+           
+
+            let promises = [];
+
+            // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
+            promises.push(
+                this.firegun.Set(`~${groupowner.pub}/chat-group/${groupname}/chat/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}/${this.firegun.user.pair.pub}`,{
+                    "_self" : false,
+                    "timestamp" : datetime, 
+                    "msg" : msgToHim, 
+                    status : "sent"
+                },undefined,{
+                    opt : {
+                        cert : cert
+                    }
+                })
+            );
+            
+            Promise.all(promises)
+            .then(s=>{
+                resolve("OK");
+            })
+            .catch(err=>{
+                reject(err);
+            })
+        });
+    }
+
+    /**
+     * 
+     * @param {string} groupname 
+     */
+     async groupNew(groupname) {
+        // /userspace/chat-group/groupname/cert
+        if (this.firegun.user.alias) {
+            this.firegun.userPut(`chat-group/${groupname}/info/name`,groupname)
+            this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify([]));
+        } else {
+            return "User not Logged in"
+        }
+    }
+
+    async groupUpdateCert(groupname) {
+        // BUG Blacklis Work Around
+        await this.firegun.userPut(`chat-group/${groupname}/banlist`,{
+            "t" : "_"
+        })
+        
+        let members = JSON.parse(await this.firegun.userGet(`chat-group/${groupname}/members`));
+        let cert = await Gun.SEA.certify(members, [{ "*" : `chat-group/${groupname}/chat`,"+" : "*"}], this.firegun.user.pair,null,{
+            block : `chat-group/${groupname}/banlist` //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
+        });
+        this.firegun.userPut(`chat-group/${groupname}/cert`,cert);
+    }
+
+    /**
+     * 
+     * @param {string} groupname
+     * @param {{pub : string}} pairkey 
+     */
+    async groupInvite(groupname, pairkey) {
+        let members = JSON.parse(await this.firegun.userGet(`chat-group/${groupname}/members`));
+        members.push(pairkey.pub);        
+        let res = await this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify(members))
+        return (res);
+    }
+
+    /**
+     * 
+     * @param {{pict : string, desc : string}} info set group info
+     */
+    async groupSetInfo(groupname, info = {pict : "", desc: ""}) {
+        if (info.pict) {
+            this.firegun.userPut(`chat-group/${groupname}/info/pict`,info.pict)
+        }
+        if (info.desc) {
+            this.firegun.userPut(`chat-group/${groupname}/info/desc`,info.desc)
+        }
+    }
+
+    async groupGetInfo(groupname) {
+        let data = await this.firegun.userGet(`chat-group/${groupname}/info`);
+        return (data)        
+    }
+
+    async groupBan(pairkey) {
+
+    }
+
+    async groupInviteAdmin() {
+
+    }
+
+    async groupBanAdmin() {
+
+    }
+
 }
+
 
 module.exports = { Firegun, Chat }
