@@ -412,8 +412,8 @@ class Chat {
     }
 
     async generatePublicCert() {
-        // BUG Blacklis Work Around
-        await this.firegun.userPut("chat-blaklist",{
+        // BUG Blacklist Work Around
+        await this.firegun.userPut("chat-blacklist",{
             "t" : "_"
         })
         let cert = await Gun.SEA.certify("*", [{ "*" : "chat-with","+" : "*"}], this.firegun.user.pair,null,{
@@ -461,7 +461,7 @@ class Chat {
             } else {
                 msgToHim = msg
             }
-            let cert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
+            let cert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);     
             let currentdate = new Date(); 
             let datetime =  currentdate.getDate() + "/"
                             + (currentdate.getMonth()+1)  + "/" 
@@ -472,14 +472,13 @@ class Chat {
            
 
             let promises = [];
-
             // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
             promises.push(
                 this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
                     "_self" : false,
                     "timestamp" : datetime, 
                     "msg" : msgToHim, 
-                    status : "sent"
+                    "status" : "sent"
                 },undefined,{
                     opt : {
                         cert : cert
@@ -492,7 +491,7 @@ class Chat {
                     "_self" : true,
                     "timestamp" : datetime, 
                     "msg" : msgToMe, 
-                    status : "sent"
+                    "status" : "sent"
                 })
             )
             
@@ -532,7 +531,7 @@ class Chat {
                 this.firegun.Set(`~${groupowner.pub}/chat-group/${groupname}/chat/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}/${this.firegun.user.pair.pub}`,{
                     "_self" : false,
                     "timestamp" : datetime, 
-                    "msg" : msgToHim, 
+                    "msg" : msg, 
                     status : "sent"
                 },undefined,{
                     opt : {
