@@ -10,6 +10,22 @@ Crypto.randomBytes = (length,callback) => {
     return (randomNumbers);
 }
 
+
+function dynamicSort(property) {
+    var sortOrder = 1;
+    if(property[0] === "-") {
+        sortOrder = -1;
+        property = property.substr(1);
+    }
+    return function (a,b) {
+        /* next line works with strings and numbers, 
+         * and you may want to customize it to your needs
+         */
+        var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
+        return result * sortOrder;
+    }
+}
+
 class Firegun {
     /**
      * 
@@ -437,19 +453,22 @@ class Chat {
     async retrieve(pubkey, date=[]) {
         console.log ("RETRIEVING ...");
         let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
+        let sortedData = [];
         console.log ("DONE !!");
-        if (pubkey.epub) {
-            for (const key in data) {
-                if (Object.hasOwnProperty.call(data, key)) {
+        for (const key in data) {
+            if (Object.hasOwnProperty.call(data, key)) {
+                if (pubkey.epub) {
                     if (data[key]._self) {
                         data[key].msg = await Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
                     } else {
                         data[key].msg = await Gun.SEA.decrypt(data[key].msg, await Gun.SEA.secret(pubkey.epub, this.firegun.user.pair));
-                    }                    
+                    }
                 }
-            }    
+            }
+            sortedData.push(data[key]);
         }
-        return data;
+        sortedData.sort(dynamicSort("timestamp"));
+        return sortedData;
     }
 
     /**
@@ -476,14 +495,14 @@ class Chat {
             }
             let cert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);     
             let currentdate = new Date(); 
-            let datetime =  currentdate.getDate() + "/"
-                            + (currentdate.getMonth()+1)  + "/" 
-                            + currentdate.getFullYear() + " @ "  
-                            + currentdate.getHours() + ":"  
-                            + currentdate.getMinutes() + ":" 
-                            + currentdate.getSeconds();
+            let year = currentdate.getFullYear();
+            let month  = ((currentdate.getMonth()+1) < 10) ? "0" + (currentdate.getMonth()+1) : (currentdate.getMonth()+1);
+            let date = (currentdate.getDate() < 10) ? "0" + (currentdate.getDate()) : (currentdate.getDate());
+            let hour = (currentdate.getHours() < 10) ? "0" + (currentdate.getHours()) : (currentdate.getHours());
+            let minutes = (currentdate.getMinutes() < 10) ? "0" + (currentdate.getMinutes()) : (currentdate.getMinutes());
+            let seconds = (currentdate.getSeconds() < 10) ? "0" + (currentdate.getSeconds()) : (currentdate.getSeconds());
+            let datetime = `${year}/${month}/${date}@${hour}:${minutes}:${seconds}`;
            
-
             let promises = [];
             // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
             promises.push(
