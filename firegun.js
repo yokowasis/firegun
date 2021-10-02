@@ -330,7 +330,9 @@ class Firegun {
      * @param {{}} [opt={}]
      * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>} Promise
      */
-    async Put (path,data,prefix=this.prefix,opt={}) {
+    async Put (path,data,prefix=this.prefix,option={}) {
+        // Prevent Mutation
+        let opt = JSON.parse(JSON.stringify(option));
         path = `${prefix}${path}`;
         let paths = path.split("/");
         let dataGun = this.gun;
@@ -356,7 +358,6 @@ class Firegun {
         return new Promise((resolve)=>{
             Promise.allSettled(promises)
             .then(s=>{
-                // console.log(s);
                 dataGun.put(data,(ack)=>{
                     resolve(ack);
                 },opt)    
