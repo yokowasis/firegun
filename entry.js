@@ -1,8 +1,7 @@
 import {Firegun, Chat} from './firegun'
 
+var fg = new Firegun();
+var chat = new Chat(fg);
 
-var gun = new Firegun();
-var chat = new Chat(gun);
-
-global.gun = gun;
+global.fg = fg;
 global.chat = chat;
