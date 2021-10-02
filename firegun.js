@@ -432,11 +432,11 @@ class Chat {
 
     async generatePublicCert() {
         // BUG Blacklist Work Around
-        await this.firegun.userPut("chat-blacklist",{
-            "t" : "_"
-        })
+        // await this.firegun.userPut("chat-blacklist",{
+        //     "t" : "_"
+        // })
         let cert = await Gun.SEA.certify("*", [{ "*" : "chat-with","+" : "*"}], this.firegun.user.pair,null,{
-            block : 'chat-blacklist' //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
+            // block : 'chat-blacklist' //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
         });
         this.firegun.userPut("chat-cert",cert);
     }
