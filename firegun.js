@@ -330,9 +330,7 @@ class Firegun {
      * @param {{}} [opt={}]
      * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>} Promise
      */
-    async Put (path,data,prefix=this.prefix,option={}) {
-        // Prevent Mutation
-        let opt = JSON.parse(JSON.stringify(option));
+    async Put (path,data,prefix=this.prefix,opt={}) {
         path = `${prefix}${path}`;
         let paths = path.split("/");
         let dataGun = this.gun;
@@ -448,7 +446,9 @@ class Chat {
      * @returns
      */
     async retrieve(pubkey, date=[]) {
+        console.log ("RETRIEVING ...");
         let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
+        console.log ("DONE !!");
         if (pubkey.epub) {
             for (const key in data) {
                 if (Object.hasOwnProperty.call(data, key)) {

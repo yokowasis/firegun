@@ -48,15 +48,16 @@ async function login() {
 }
 
 async function send() {
+    console.log ("SENDING CHAT !!!");
     let text = document.querySelector("#chatmsg").value;
     let tujuan = document.querySelector("#to").value;
     await chat.send(users[tujuan],text)
     console.log ("CHAT SENT !!!");
 }
 
-async function open() {
+async function openChat() {
     let roomname = document.querySelector("#roomname").value;
-    let chats = await chat.retrieve(users[roomname]);
+    let chats = await chat.retrieve(users[roomname],[2021,10,2]);
     console.log (chats);
 }
 
