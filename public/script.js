@@ -51,8 +51,13 @@ async function send() {
     console.log ("SENDING CHAT !!!");
     let text = document.querySelector("#chatmsg").value;
     let tujuan = document.querySelector("#to").value;
-    await chat.send(users[tujuan],text)
-    console.log ("CHAT SENT !!!");
+    try {
+        await chat.send(users[tujuan],text)        
+        console.log ("CHAT SENT !!!");
+    } catch (error) {
+        console.log (error)        
+    }    
+
 }
 
 async function openChat() {
@@ -61,3 +66,15 @@ async function openChat() {
     console.log (chats);
 }
 
+async function genAllCert() {
+    document.getElementById("certBtn").innerHTML = "Proses ..."
+    for (const user in users) {
+        if (Object.hasOwnProperty.call(users, user)) {
+            const keypair = users[user];
+            await fg.loginPair(keypair);
+            await chat.generatePublicCert();
+            await fg.userLogout()
+        }
+    }
+    document.getElementById("certBtn").innerHTML = "Generate Cert"
+}
