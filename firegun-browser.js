@@ -424,7 +424,8 @@ class Chat {
         let cert = await Gun.SEA.certify("*", [{ "*" : "chat-with","+" : "*"}], this.firegun.user.pair,null,{
             // block : 'chat-blacklist' //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
         });
-        this.firegun.userPut("chat-cert",cert);
+        let ack = await this.firegun.userPut("chat-cert",cert);
+        return (ack);
     }
 
     /**
@@ -460,6 +461,11 @@ class Chat {
      * @returns {Promise<{{ err : {}} | {ok : {"" : 1}}}>}  GunAck
      */
     async send(pairkey,msg) {
+        if (!this.firegun.user.alias) {
+            return new Promise(async (resolve, reject) => {
+                reject("User Belum Login")
+            });
+        } else
         return new Promise(async (resolve, reject) => {
             let msgToHim, msgToMe;
             if (pairkey.epub) {
