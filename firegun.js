@@ -8,7 +8,20 @@ require('gun/lib/radisk');
 require('gun/lib/store');
 require('gun/lib/rindexed');
 
+if (typeof (Crypto.randomBytes) === "undefined") {
+    function randomString(length, chars) {
+        var result = '';
+        for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+        return result;
+    }
 
+    Crypto.randomBytes = (length,callback) => {
+        var rString = randomString(length, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+        let err = null;
+        callback(err,rString)
+        return (rString);
+    }
+}
 class Firegun {
     /**
      * 
@@ -23,22 +36,27 @@ class Firegun {
      * @param {string} [prefix=""] Database Prefix
      * @param {boolean} [axe=false] Do You want to use Axe Support ?
      * @param {number} [port=8765] Multicast Port
+     * @param {{}} [gunInstance=null] Bring your own Gun instance
      */
 
-    constructor(peers = [""],dbname="fireDB", localstorage=false,prefix="",axe=false,port=8765) {
+    constructor(peers = [""],dbname="fireDB", localstorage=false,prefix="",axe=false,port=8765,gunInstance=null) {
 
         this.prefix = prefix;
 
-        this.gun = Gun({
-            file : dbname,
-            localStorage : localstorage,
-            axe : axe,
-            multicast : {
-                port : port
-            },
-            peers : peers
-        })
-
+        if (gunInstance) {
+            this.gun = gunInstance;
+        } else {
+            this.gun = Gun({
+                file : dbname,
+                localStorage : localstorage,
+                axe : axe,
+                multicast : {
+                    port : port
+                },
+                peers : peers
+            })    
+        }
+        
         this.user = {
             alias : "",
             pair : {
