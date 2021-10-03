@@ -93,12 +93,31 @@ window.openChat = async () => {
         for (const key in chats) {
             if (Object.hasOwnProperty.call(chats, key)) {
                 const chat = chats[key];
-                let name = chat._self ? name1 : name2;
-                html += `
-                <p>${name}</p>
-                <p>${chat.timestamp}</p>
-                <p>${chat.msg}</p>
-                `;
+                if (chat._self) {
+                    html += `
+                    <div class="d-flex flex-row mb-3">
+                        <div class="card" style="width: 18rem;">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary fw-bold">${name1}</h5>
+                                <h6 class="card-subtitle mb-2 fs-6 text-muted">${chat.timestamp}</h6>
+                                <p class="card-text">${chat.msg}</p>
+                            </div>
+                        </div>
+                    </div>
+                    `;    
+                } else {
+                    html += `
+                    <div class="d-flex flex-row-reverse mb-3">
+                        <div class="card" style="width: 18rem;">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary fw-bold">${name2}</h5>
+                                <h6 class="card-subtitle mb-2 fs-6 text-muted">${chat.timestamp}</h6>
+                                <p class="card-text">${chat.msg}</p>
+                            </div>
+                        </div>
+                    </div>
+                    `;    
+                }
             }
         }
         document.getElementById("chatMessage").innerHTML = html;
