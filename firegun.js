@@ -8,18 +8,30 @@ require('gun/lib/radisk');
 require('gun/lib/store');
 require('gun/lib/rindexed');
 
-if (typeof (Crypto.randomBytes) === "undefined") {
-    function randomString(length, chars) {
-        var result = '';
-        for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-        return result;
-    }
-
+if (typeof (Crypto.randomBytes) === "undefined") {     
     Crypto.randomBytes = (length,callback) => {
-        var rString = randomString(length, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+        var random_num = new Uint32Array(Math.floor(length/5)); // 2048 = number length in bits
+        var arr = window.crypto.getRandomValues(random_num);
+        var randomNumbers = arr.join("")    
+        randomNumbers =  randomNumbers.slice(0,length);
         let err = null;
-        callback(err,rString)
-        return (rString);
+        callback(err,randomNumbers)
+        return (randomNumbers);
+    }
+}
+
+function dynamicSort(property) {
+    var sortOrder = 1;
+    if(property[0] === "-") {
+        sortOrder = -1;
+        property = property.substr(1);
+    }
+    return function (a,b) {
+        /* next line works with strings and numbers, 
+         * and you may want to customize it to your needs
+         */
+        var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
+        return result * sortOrder;
     }
 }
 class Firegun {
