@@ -1,24 +1,15 @@
-const Gun = require("gun");
-const Crypto = require('crypto');
- 
-require('gun/sea');
-require('gun/lib/load');
-require('gun/lib/radix');
-require('gun/lib/radisk');
-require('gun/lib/store');
-require('gun/lib/rindexed');
+var Crypto = {}
 
-if (typeof (Crypto.randomBytes) === "undefined") {     
-    Crypto.randomBytes = (length,callback) => {
-        var random_num = new Uint32Array(Math.floor(length/5)); // 2048 = number length in bits
-        var arr = window.crypto.getRandomValues(random_num);
-        var randomNumbers = arr.join("")    
-        randomNumbers =  randomNumbers.slice(0,length);
-        let err = null;
-        callback(err,randomNumbers)
-        return (randomNumbers);
-    }
+Crypto.randomBytes = (length,callback) => {
+    var random_num = new Uint32Array(Math.floor(length/5)); // 2048 = number length in bits
+    var arr = window.crypto.getRandomValues(random_num);
+    var randomNumbers = arr.join("")    
+    randomNumbers =  randomNumbers.slice(0,length);
+    let err = null;
+    callback(err,randomNumbers)
+    return (randomNumbers);
 }
+
 
 function dynamicSort(property) {
     var sortOrder = 1;
@@ -34,7 +25,8 @@ function dynamicSort(property) {
         return result * sortOrder;
     }
 }
-class Firegun {
+
+export class Firegun {
     /**
      * 
      * --------------------------------------
@@ -457,7 +449,7 @@ class Firegun {
     }
 }
 
-class Chat {
+export class Chat {
 
     /**
      * 
@@ -607,6 +599,7 @@ class Chat {
                     }
                 })
             );
+
             promises.push(
                 this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
                     "_self" : true,
@@ -697,5 +690,3 @@ class Chat {
 
 }
 
-
-module.exports = { Firegun, Chat }
