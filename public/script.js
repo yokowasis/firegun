@@ -1,3 +1,10 @@
+import {Firegun, Chat} from '../firegun-browser.js'
+let fg = new Firegun(["https://fire-gun.herokuapp.com/gun"],undefined,true);
+let chat = new Chat(fg)    
+
+window.fg = fg;
+window.chat = chat;
+
 let users = {}
 users.user1 = {
     "pub": "819hkcPrDR09ao2FmiV1FpemF8Bt2fTJ1mk6lMIfxCk.hk_OlCysl54MAmkJT_UQkxYirIQfj7ALzY-mYlJhztI",
@@ -35,11 +42,11 @@ users.user5 = {
 }
 
 
-function test() {
+window.test = () => {
     console.log ("TESTED!!!!");
 }
 
-async function login() {
+window.login = async () => {
     let user = document.querySelector("#userLogin").value;
     await fg.userLogout()
     await fg.loginPair(users[user]);
@@ -47,7 +54,7 @@ async function login() {
     document.querySelector("#loggedInUser").innerHTML = fg.user.alias;
 }
 
-async function send() {
+window.send = async () => {
     console.log ("SENDING CHAT !!!");
     let text = document.querySelector("#chatmsg").value;
     let tujuan = document.querySelector("#to").value;
@@ -60,13 +67,19 @@ async function send() {
 
 }
 
-async function openChat() {
+window.openChat = async () => {
     let roomname = document.querySelector("#roomname").value;
-    let chats = await chat.retrieve(users[roomname],[2021,10,2]);
-    console.log (chats);
+    // let chats = await chat.retrieve(users[roomname],[2021,10,2]);
+    // let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
+
+    fg.On(`~${fg.user.pair.pub}/chat-with/${users[roomname].pub}/2021/10/03`,async ()=>{
+        let chats = await chat.retrieve(users[roomname],['2021','10','03']);
+        console.log (chats);
+    })
+    console.log ("ON !!!");
 }
 
-async function genAllCert() {
+window.genAllCert = async () => {
     document.getElementById("certBtn").innerHTML = "Proses ..."
     for (const user in users) {
         if (Object.hasOwnProperty.call(users, user)) {
