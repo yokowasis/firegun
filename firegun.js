@@ -476,7 +476,8 @@ class Chat {
         let cert = await Gun.SEA.certify("*", [{ "*" : "chat-with","+" : "*"}], this.firegun.user.pair,null,{
             // block : 'chat-blacklist' //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
         });
-        this.firegun.userPut("chat-cert",cert);
+        let ack = await this.firegun.userPut("chat-cert",cert);
+        return (ack);
     }
 
     /**
