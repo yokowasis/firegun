@@ -26,7 +26,7 @@ function dynamicSort(property) {
     }
 }
 
-class Firegun {
+export class Firegun {
     /**
      * 
      * --------------------------------------
@@ -449,7 +449,7 @@ class Firegun {
     }
 }
 
-class Chat {
+export class Chat {
 
     /**
      * 
@@ -534,7 +534,7 @@ class Chat {
             let promises = [];
             // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
             promises.push(
-                await this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
+                await this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${year}/${(month)}/${date}`,{
                     "_self" : false,
                     "timestamp" : datetime, 
                     "msg" : msgToHim, 
@@ -547,7 +547,7 @@ class Chat {
             );
             // Put to My userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
             promises.push(
-                await this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
+                await this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${year}/${month}/${date}`,{
                     "_self" : true,
                     "timestamp" : datetime, 
                     "msg" : msgToMe, 
@@ -689,3 +689,4 @@ class Chat {
     }
 
 }
+
