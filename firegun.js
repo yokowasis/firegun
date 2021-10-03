@@ -489,19 +489,22 @@ class Chat {
     async retrieve(pubkey, date=[]) {
         console.log ("RETRIEVING ...");
         let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
+        let sortedData = [];
         console.log ("DONE !!");
-        if (pubkey.epub) {
-            for (const key in data) {
-                if (Object.hasOwnProperty.call(data, key)) {
+        for (const key in data) {
+            if (Object.hasOwnProperty.call(data, key)) {
+                if (pubkey.epub) {
                     if (data[key]._self) {
                         data[key].msg = await Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
                     } else {
                         data[key].msg = await Gun.SEA.decrypt(data[key].msg, await Gun.SEA.secret(pubkey.epub, this.firegun.user.pair));
-                    }                    
+                    }
                 }
-            }    
+            }
+            sortedData.push(data[key]);
         }
-        return data;
+        sortedData.sort(dynamicSort("timestamp"));
+        return sortedData;
     }
 
     /**
