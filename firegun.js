@@ -607,6 +607,15 @@ class Chat {
                     }
                 })
             );
+
+            promises.push(
+                this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
+                    "_self" : true,
+                    "timestamp" : datetime, 
+                    "msg" : msgToMe, 
+                    "status" : "sent"
+                },undefined,{})
+            )
             
             Promise.all(promises)
             .then(s=>{
