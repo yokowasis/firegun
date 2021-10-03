@@ -42,7 +42,6 @@ export class Firegun {
      * @param {number} [port=8765] Multicast Port
      * @param {{}} [gunInstance=null] Bring your own Gun instance
      */
-
     constructor(peers = [""],dbname="fireDB", localstorage=false,prefix="",axe=false,port=8765,gunInstance=null) {
 
         this.prefix = prefix;
@@ -140,17 +139,20 @@ export class Firegun {
 
     /**
      * 
-     * @param {{pub : string, epub : string, priv : string, epriv : string}} pair Login with SEA Key Pair
+     * Login using SEA Pair Key, instead of using username and Password
+     * 
+     * @param {{pub : string, epub : string, priv : string, epriv : string}} pair SEA Key Pair
+     * @param {string=} alias if ommited, the value is Anonymous
      * @returns {Promise<({err:Error}|{alias:string,pair:{priv:string,pub:string,epriv:string,epub:string}})>}
      */
-     async loginPair (pair) {
+     async loginPair (pair,alias="Anonymous") {
         return new Promise((resolve,reject)=>{
             this.gun.user().auth(pair,(s=>{
                 if (s.err) {
                     reject (s.err)
                 } else {
                     this.user = {
-                        alias : "Anonymous",
+                        alias : alias,
                         pair : s.sea,
                     }
                     resolve(this.user);
