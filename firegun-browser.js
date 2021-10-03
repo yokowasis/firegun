@@ -70,12 +70,40 @@ class Firegun {
                 epub : ""
             }
         };
+        this.ev = {};
     }
 
     async _timeout (ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    async Off (ev = "default") {
+        if (this.ev[ev].handler) {
+            this.ev[ev].handler.off();
+        }
+        this.ev[ev].handler = null;
+    }
+
+    async On (path,callback,ev = "default", different=null,prefix=this.prefix) {
+        path = `${prefix}${path}`;
+        let paths = path;
+        paths = paths.split("/");
+        let dataGun = this.gun;
+        
+        paths.forEach(path => {
+            dataGun = dataGun.get(path);
+        });
+
+        let listenerHandler = (value, key, _msg, _ev) => {
+            this.ev[ev] = {
+                handler : _ev
+            }
+            if (value)
+                callback(JSON.parse(JSON.stringify(value)))
+        }
+    
+        dataGun.on(listenerHandler,different);
+    }        
     
     /**
      * ----------------------------------
