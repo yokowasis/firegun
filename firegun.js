@@ -516,6 +516,11 @@ class Chat {
      * @returns {Promise<{{ err : {}} | {ok : {"" : 1}}}>}  GunAck
      */
     async send(pairkey,msg) {
+        if (!this.firegun.user.alias) {
+            return new Promise(async (resolve, reject) => {
+                reject("User Belum Login")
+            });
+        } else
         return new Promise(async (resolve, reject) => {
             let msgToHim, msgToMe;
             if (pairkey.epub) {
