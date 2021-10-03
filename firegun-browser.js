@@ -534,6 +534,9 @@ export class Chat {
             let datetime = `${year}/${month}/${date}@${hour}:${minutes}:${seconds}`;
            
             let promises = [];
+
+            // Harus await, entah kenapa. Kalau tidak await tidak bisa.
+
             // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
             promises.push(
                 await this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${year}/${(month)}/${date}`,{
