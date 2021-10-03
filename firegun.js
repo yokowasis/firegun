@@ -531,18 +531,18 @@ class Chat {
             }
             let cert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);     
             let currentdate = new Date(); 
-            let datetime =  currentdate.getDate() + "/"
-                            + (currentdate.getMonth()+1)  + "/" 
-                            + currentdate.getFullYear() + " @ "  
-                            + currentdate.getHours() + ":"  
-                            + currentdate.getMinutes() + ":" 
-                            + currentdate.getSeconds();
+            let year = currentdate.getFullYear();
+            let month  = ((currentdate.getMonth()+1) < 10) ? "0" + (currentdate.getMonth()+1) : (currentdate.getMonth()+1);
+            let date = (currentdate.getDate() < 10) ? "0" + (currentdate.getDate()) : (currentdate.getDate());
+            let hour = (currentdate.getHours() < 10) ? "0" + (currentdate.getHours()) : (currentdate.getHours());
+            let minutes = (currentdate.getMinutes() < 10) ? "0" + (currentdate.getMinutes()) : (currentdate.getMinutes());
+            let seconds = (currentdate.getSeconds() < 10) ? "0" + (currentdate.getSeconds()) : (currentdate.getSeconds());
+            let datetime = `${year}/${month}/${date}@${hour}:${minutes}:${seconds}`;
            
-
             let promises = [];
             // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
             promises.push(
-                await this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
+                await this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${year}/${(month)}/${date}`,{
                     "_self" : false,
                     "timestamp" : datetime, 
                     "msg" : msgToHim, 
@@ -555,7 +555,7 @@ class Chat {
             );
             // Put to My userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
             promises.push(
-                await this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}`,{
+                await this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${year}/${month}/${date}`,{
                     "_self" : true,
                     "timestamp" : datetime, 
                     "msg" : msgToMe, 
