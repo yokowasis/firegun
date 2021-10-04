@@ -46,6 +46,15 @@ users.user5 = {
     "epriv": "_4y7hFSlaeD24Kk9FgsIt1RGx0fXLVAsSCh9FQSG180"
 }
 
+document.getElementById('chatmsg').onkeypress = function(e){
+    if (!e) e = window.event;
+    var keyCode = e.code || e.key;
+    if (keyCode == 'Enter'){
+        window.send()
+      return false;
+    }
+  }
+
 window.users = users;
 
 window.findAlias = (pubKey) => {
@@ -74,14 +83,14 @@ window.login = async () => {
 window.send = async () => {
     console.log ("SENDING CHAT !!!");
     let text = document.querySelector("#chatmsg").value;
-    let tujuan = document.querySelector("#to").value;
+    let tujuan = document.querySelector("#roomname").value;
     try {
-        await chat.send(users[tujuan],text)        
+        await chat.send(users[tujuan],text)
         console.log ("CHAT SENT !!!");
+        document.querySelector("#chatmsg").value = "";
     } catch (error) {
-        console.log (error)        
-    }    
-
+        console.log (error)
+    }
 }
 
 window.openChat = async () => {
@@ -102,25 +111,19 @@ window.openChat = async () => {
                 const chat = chats[key];
                 if (chat._self) {
                     html += `
-                    <div class="d-flex flex-row mb-3">
-                        <div class="card" style="width: 18rem;">
-                            <div class="card-body">
-                                <h5 class="card-title text-primary fw-bold">${name1}</h5>
-                                <h6 class="card-subtitle mb-2 fs-6 text-muted">${chat.timestamp}</h6>
-                                <p class="card-text">${chat.msg}</p>
-                            </div>
+                    <div class="media media-chat"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
+                        <div class="media-body">
+                            <p>${chat.msg}</p>
+                            <p class="meta"><time datetime="">${chat.timestamp}</time></p>
                         </div>
-                    </div>
+                    </div>                    
                     `;    
                 } else {
                     html += `
-                    <div class="d-flex flex-row-reverse mb-3">
-                        <div class="card" style="width: 18rem;">
-                            <div class="card-body">
-                                <h5 class="card-title text-primary fw-bold">${name2}</h5>
-                                <h6 class="card-subtitle mb-2 fs-6 text-muted">${chat.timestamp}</h6>
-                                <p class="card-text">${chat.msg}</p>
-                            </div>
+                    <div class="media media-chat media-chat-reverse"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
+                        <div class="media-body">
+                            <p>${chat.msg}</p>
+                            <p class="meta"><time datetime="">${chat.timestamp}</time></p>
                         </div>
                     </div>
                     `;    
@@ -128,6 +131,8 @@ window.openChat = async () => {
             }
         }
         document.getElementById("chatMessage").innerHTML = html;
+        var objDiv = document.getElementById("chatMessage");
+        objDiv.scrollTop = objDiv.scrollHeight;
     })
     console.log ("ON !!!");
 }
