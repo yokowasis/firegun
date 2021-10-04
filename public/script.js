@@ -1,5 +1,5 @@
 import {Firegun, Chat} from '../firegun-browser.js'
-let fg = new Firegun(["https://fire-gun.herokuapp.com/gun"],undefined,true);
+let fg = new Firegun(["https://fire-gun.herokuapp.com/gun"]);
 let chat = new Chat(fg)    
 
 window.fg = fg;
@@ -46,6 +46,8 @@ users.user5 = {
     "epriv": "_4y7hFSlaeD24Kk9FgsIt1RGx0fXLVAsSCh9FQSG180"
 }
 
+window.users = users;
+
 window.findAlias = (pubKey) => {
     for (const key in users) {
         if (Object.hasOwnProperty.call(users, key)) {
@@ -84,8 +86,13 @@ window.send = async () => {
 
 window.openChat = async () => {
     let roomname = document.querySelector("#roomname").value;
-    fg.On(`~${fg.user.pair.pub}/chat-with/${users[roomname].pub}/2021/10/03`,async ()=>{
-        let chats = await chat.retrieve(users[roomname],['2021','10','03']);
+
+    let currentdate = new Date(); 
+    let year = currentdate.getFullYear();
+    let month  = ((currentdate.getMonth()+1) < 10) ? "0" + (currentdate.getMonth()+1) : (currentdate.getMonth()+1);
+    let date = (currentdate.getDate() < 10) ? "0" + (currentdate.getDate()) : (currentdate.getDate());
+    fg.On(`~${fg.user.pair.pub}/chat-with/${users[roomname].pub}/${year}/${month}/${date}`,async ()=>{
+        let chats = await chat.retrieve(users[roomname],[year,month,date]);
         let name1 = fg.user.alias;
         let name2 = findAlias(users[roomname].pub);
         let html = "";
