@@ -37,27 +37,18 @@ interface FiregunUser {
 
 class Firegun {
 
-    prefix = "";
-    gun : IGunChainReference
-    ev = {}
-    emptyUser : FiregunUser = 
-    {
-        alias : "",
-        pair : {
-            priv : "",
-            pub : "",
-            epriv : "",
-            epub : ""
-        }
-    };    
-    user : FiregunUser
+    prefix : string;
+    gun : IGunChainReference;
+    port : number;
+    user : FiregunUser;
+    ev : {}
 
     /**
      * 
      * --------------------------------------
      * Create Firegun Instance
      * 
-     * @param {string[]} peers - Peers url
+     * @param {string[]} [peers=[]] - Peers url
      * @param {string} [dbname="fireDB"] - Database Name
      * @param {boolean} [localstorage = false] Method of saving the database. 
      * - localStorage : true 
@@ -67,7 +58,14 @@ class Firegun {
      * @param {number} [port=8765] Multicast Port
      * @param {IGunChainReference} [gunInstance=null] Bring your own Gun instance
      */
-    constructor(peers: string[] = [""],dbname: string="fireDB", localstorage: boolean=false,prefix: string="",axe: boolean=false,port: number=8765,gunInstance: IGunChainReference=null) {
+    constructor(
+        peers: string[] = [],
+        dbname: string = "fireDB",
+        localstorage: boolean = false,
+        prefix: string = "",
+        axe: boolean = false,
+        port: number = 8765,
+        gunInstance: IGunChainReference = null) {
 
         this.prefix = prefix;
 
@@ -84,10 +82,20 @@ class Firegun {
                 peers : peers
             })    
         }
-        this.user = this.emptyUser;
+        
+        this.user = {
+            alias : "",
+            pair : {
+                priv : "",
+                pub : "",
+                epriv : "",
+                epub : ""
+            }
+        };
+        this.ev = {};
     }
 
-    async _timeout (ms : number) {
+    async _timeout (ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
@@ -98,9 +106,17 @@ class Firegun {
         this.ev[ev].handler = null;
     }
 
-    async On (path : string,callback:({}) => void,ev = "default", different=true,prefix=this.prefix) {
+    /**
+     * 
+     * @param {string} path Path to subscribe / monitor
+     * @param {({})=>void} callback callback Function
+     * @param {string?} ev On Identifier, used for Off
+     * @param {boolean?} [different=true] whether to only fetch all or only the difference
+     * @param {string?} prefix 
+     */
+    async On (path: string,callback: ({ }) => void,ev: string = "default", different: boolean=true,prefix: string =this.prefix) {
         path = `${prefix}${path}`;
-        let paths = path.split("/");        
+        let paths = path.split("/");
         let dataGun = this.gun;
         
         paths.forEach(path => {
@@ -115,10 +131,8 @@ class Firegun {
                 callback(JSON.parse(JSON.stringify(value)))
         }
     
-        //@ts-ignore
-        dataGun.on(listenerHandler,{
-            change : different
-        });
+        // @ts-ignore
+        dataGun.on(listenerHandler,different);
     }        
     
     /**
@@ -129,15 +143,16 @@ class Firegun {
      * hanya saja RAD masih Memiliki BUG, dan tidak bekerja secara consistent
      * @param {string} key must begin with #
      * @param {(string | {})} data If object, it will be stringified automatically
-     * @returns {Promise<{err : (Error | undefined), ok : (any)}>}
+     * @returns {Promise<({err:Error,ok:any}|{err:undefined,ok:string})>}
      */
-     async addContentAdressing (key: string,data: ({} | string)  ): Promise<{ err: (Error | undefined); ok: (any); }> {
+     async addContentAdressing (key: string,data: (string | {})): Promise<({ err: Error; ok: any; } | { err: undefined; ok: string; })> {
         if (typeof data === "object") {
             data = JSON.stringify(data);
         }
         let hash = await Gun.SEA.work(data, null, null, {name: "SHA-256"});
         return new Promise((resolve) => {
-            this.gun.get(`${key}`).get(hash).put(<any>data,(s)=>{
+            // @ts-ignore
+            this.gun.get(`${key}`).get(hash).put(data,(s)=>{
                 resolve(s);
             });
         });        
@@ -145,7 +160,7 @@ class Firegun {
     
     /**
      * Generate Key PAIR from SEA module
-     * @returns {Promise<CryptoKeyPair>}
+     * @returns {Promise<{pub:string,priv:string,epub:string,epriv:string}>}
      */
     async generatePair (): Promise<{ pub: string; priv: string; epub: string; epriv: string; }> {
         return new Promise(async function (resolve) {
@@ -157,15 +172,14 @@ class Firegun {
      * 
      * Login using SEA Pair Key, instead of using username and Password
      * 
-     * @async
-     * @param {CryptoKeyPair} pair SEA Key Pair
-     * @param {string} [alias=Anonymous] if ommited, the value is Anonymous
-     * @returns {Promise<FiregunUser>}
+     * @param {{pub : string, epub : string, priv : string, epriv : string}} pair SEA Key Pair
+     * @param {string=} alias if ommited, the value is Anonymous
+     * @returns {Promise<({err:Error}|{alias:string,pair:{priv:string,pub:string,epriv:string,epub:string}})>}
      */
-     async loginPair (pair: CryptoKeyPair, alias: string = "Anonymous"): Promise<FiregunUser> {
+     async loginPair (pair: { pub: string; epub: string; priv: string; epriv: string; },alias: string | undefined="Anonymous"): Promise<({ err: Error; } | { alias: string; pair: { priv: string; pub: string; epriv: string; epub: string; }; })> {
         return new Promise((resolve,reject)=>{
             this.gun.user().auth(pair,(s=>{
-                if ("err" in s) {
+                if (s.err) {
                     reject (s.err)
                 } else {
                     this.user = {
@@ -182,22 +196,22 @@ class Firegun {
      * 
      * Create a new user and Log him in
      * 
-     * @async
      * @param {string} username 
      * @param {string} password 
-     * @returns {Promise<FiregunUser>}
+     * @returns {Promise<{err : string}|{alias: string,pair: {priv: string,pub: string,epriv: string,epub: string}}>}
      */
-    async userNew (username: string = "", password: string = ""): Promise<FiregunUser> {
+    async userNew (username: string = "", password: string = ""): Promise<{ err: string; } | { alias: string; pair: { priv: string; pub: string; epriv: string; epub: string; }; }> {
         return new Promise((resolve)=>{
             this.gun.user().create(username,password,async (s)=>{
-                if ("err" in  s) {
-                    console.log(s);
-                    this.user = this.emptyUser
+                //@ts-ignore
+                if (s && s.err) {
+                    // @ts-ignore
+                    resolve(s);
                 } else {
                     this.gun.user().leave();
                     this.user = await this.userLogin(username,password);
-                }                
-                resolve(this.user);
+                    resolve(this.user);    
+                }
             });
         })        
     }
@@ -206,27 +220,27 @@ class Firegun {
      * 
      * Log a user in
      * 
-     * @async
      * @param {string} username 
      * @param {string} password 
      * @param {number} repeat time to repeat the login before give up. Because the nature of decentralization, just because the first time login is failed, doesn't mean the user / password pair doesn't exist in the network
-     * @returns {Promise<FiregunUser>}
+     * @returns {Promise.<{alias: string,pair: {priv: string,pub: string,epriv: string,epub: string}}>}
      */
-    async userLogin (username: string, password: string, repeat: number=2): Promise<FiregunUser>  {
-        return new Promise((resolve,reject)=>{
+    async userLogin (username: string, password: string, repeat: number=2): Promise<{ alias: string; pair: { priv: string; pub: string; epriv: string; epub: string; }; }> {
+        return new Promise((resolve)=>{
             this.gun.user().auth(username,password,async (s)=>{
-                if ("err" in s) {
+                //@ts-ignore
+                if (s && s.err) {
                     if (repeat>0) {
                         await this._timeout(1000);
                         resolve (await this.userLogin(username,password,repeat-1));
                     } else {
-                        this.user = this.emptyUser
-                        this.user.err = s;
-                        reject(this.user);
+                        //@ts-ignore
+                        resolve(s);
                     }                    
                 } else {
                     this.user = {
                         alias : username,
+                        //@ts-ignore
                         pair : s.sea,
                     }
                     resolve(this.user);    
@@ -270,6 +284,7 @@ class Firegun {
      * @returns {Promise<{}>}
      */
     async userLoad (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{}> {
+        // @ts-ignore
         if (this.gun.user().is) {
            path = `~${this.user.pair.pub}/${path}`
            return (await this.Load(path,repeat,prefix));
@@ -323,6 +338,7 @@ class Firegun {
      * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>}
      */
     async userPut (path: string,data: (string | object),prefix=this.prefix): Promise<({ "@": string; err: undefined; ok: { "": number; }; "#": string; } | { err: Error; ok: any; })> {
+        // @ts-ignore
         if (this.gun.user().is) {
             path = `~${this.user.pair.pub}/${path}`
             return (await this.Put(path,data,prefix));
@@ -496,24 +512,33 @@ class Chat {
      * @returns
      */
     async retrieve(pubkey: { pub: string; epub?: string; }, date=[]) {
-        console.log ("RETRIEVING ...");
-        let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
-        let sortedData = [];
-        console.log ("DONE !!");
-        for (const key in data) {
-            if (Object.hasOwnProperty.call(data, key)) {
-                if (pubkey.epub) {
-                    if (data[key]._self) {
-                        data[key].msg = await Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
-                    } else {
-                        data[key].msg = await Gun.SEA.decrypt(data[key].msg, await Gun.SEA.secret(pubkey.epub, this.firegun.user.pair));
+        if (!this.firegun.user.alias) {
+            return new Promise(async (resolve, reject) => {
+                reject("User Belum Login")
+            });
+        } else {
+            console.log ("RETRIEVING ...");
+            let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
+            let sortedData = [];
+            console.log ("DONE !!");
+            for (const key in data) {
+                if (Object.hasOwnProperty.call(data, key)) {
+                    if (pubkey.epub) {
+                        if (data[key]._self) {
+                            data[key].msg = await Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
+                        } else {
+                            data[key].msg = await Gun.SEA.decrypt(data[key].msg, await Gun.SEA.secret(pubkey.epub, this.firegun.user.pair));
+                        }
                     }
                 }
+                sortedData.push(data[key]);
             }
-            sortedData.push(data[key]);
+            sortedData.sort(dynamicSort("timestamp"));
+            return new Promise(async (resolve, reject) => {
+                resolve(sortedData);
+            });
+            
         }
-        sortedData.sort(dynamicSort("timestamp"));
-        return sortedData;
     }
 
     /**
@@ -709,6 +734,5 @@ class Chat {
     }
 
 }
-
 
 module.exports = { Firegun, Chat }
