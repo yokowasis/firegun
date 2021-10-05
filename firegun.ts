@@ -1,5 +1,5 @@
-import * as Gun from "gun";
-import * as Crypto from "crypto"
+import Gun from "gun";
+import Crypto from "crypto"
 
 import 'gun/sea';
 import 'gun/lib/load';
@@ -55,7 +55,6 @@ export class Firegun {
 
     prefix : string;
     gun : IGunChainReference;
-    port : number;
     user : FiregunUser;
     ev : {
         [key:string] : {
@@ -83,7 +82,7 @@ export class Firegun {
         prefix: string = "",
         axe: boolean = false,
         port: number = 8765,
-        gunInstance: IGunChainReference = null) {
+        gunInstance: (IGunChainReference | null) = null) {
 
         this.prefix = prefix;
 
@@ -179,10 +178,11 @@ export class Firegun {
         if (typeof data === "object") {
             data = JSON.stringify(data);
         }
-        let hash = await Gun.SEA.work(data, null, null, {name: "SHA-256"});
+        let hash = await Gun.SEA.work(data, null, undefined, {name: "SHA-256"});
         return new Promise((resolve) => {
+            if (hash)
             this.gun.get(`${key}`).get(hash).put(<any>data,(s)=>{
-                resolve(s);
+                resolve(<Ack>s);
             });
         });        
     }
@@ -191,7 +191,7 @@ export class Firegun {
      * Generate Key PAIR from SEA module
      * @returns
      */
-    async generatePair (): Promise<IGunCryptoKeyPair> {
+    async generatePair (): Promise<IGunCryptoKeyPair | undefined> {
         return new Promise(async function (resolve) {
             resolve (await Gun.SEA.pair());
         });        
@@ -304,7 +304,7 @@ export class Firegun {
      * @param prefix Database Prefix
      * @returns
      */
-    async userGet (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{}> {
+    async userGet (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{} | undefined> {
         if (this.user.alias) {
            path = `~${this.user.pair.pub}/${path}`
            return (await this.Get(path,repeat,prefix));
@@ -320,7 +320,7 @@ export class Firegun {
      * @param prefix Database Prefix
      * @returns
      */
-    async userLoad (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{}> {
+    async userLoad (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{} | undefined> {
         if (this.user.alias) {
            path = `~${this.user.pair.pub}/${path}`
            return (await this.Load(path,repeat,prefix));
@@ -338,7 +338,7 @@ export class Firegun {
      * @param {string} prefix Database Prefix
      * @returns
      */
-    async Get (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{[key:string] : {}}> {
+    async Get (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<undefined | {[key:string] : {}}> {
         let path0 = path;
         path = `${prefix}${path}`;
         let paths = path.split("/");
@@ -379,7 +379,7 @@ export class Firegun {
                 path = `~${this.user.pair.pub}/${path}`
                 resolve (await this.Put(path,data,prefix));
              } else {
-                reject (<Ack>{err : "User Belum Login"});
+                reject (<Ack>{err : new Error("User Belum Login") , ok : undefined});
              }     
         });
     }

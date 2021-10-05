@@ -1,4 +1,4 @@
-let users = {}
+ let users = {}
 users.user1 = {
     "alias" : "user1",
     "pub": "819hkcPrDR09ao2FmiV1FpemF8Bt2fTJ1mk6lMIfxCk.hk_OlCysl54MAmkJT_UQkxYirIQfj7ALzY-mYlJhztI",
