@@ -1,5 +1,4 @@
-import Gun from "gun";
-import Crypto from "crypto"
+import * as Gun from "gun";
  
 import 'gun/sea';
 import 'gun/lib/load';
@@ -9,13 +8,25 @@ import 'gun/lib/store';
 import 'gun/lib/rindexed';
 import { IGunChainReference } from "gun/types/chain";
 
+const Crypto : any = {}
+
+Crypto.randomBytes = (length : number,callback : (err : any, randomNumbers : string) => void) => {
+    var random_num = new Uint32Array(Math.floor(length/5)); // 2048 = number length in bits
+    var arr = window.crypto.getRandomValues(random_num);
+    var randomNumbers = arr.join("")    
+    randomNumbers =  randomNumbers.slice(0,length);
+    let err = null;
+    callback(err,randomNumbers)
+    return (randomNumbers);
+}
+
 function dynamicSort(property:string) {
     var sortOrder = 1;
     if(property[0] === "-") {
         sortOrder = -1;
         property = property.substr(1);
     }
-    return function (a : (string | number),b : (string | number)) {
+    return function (a : any,b : any) {
         /* next line works with strings and numbers, 
          * and you may want to customize it to your needs
          */
@@ -50,13 +61,17 @@ interface Pubkey {
     epub?: string,
 }
 
-class Firegun {
+export class Firegun {
 
     prefix : string;
     gun : IGunChainReference;
     port : number;
     user : FiregunUser;
-    ev : {}
+    ev : {
+        [key:string] : {
+            handler : any
+        }
+    }
 
     /**
      * 
@@ -135,10 +150,13 @@ class Firegun {
      * @param ev On subscription name, default : "default"
      */
     async Off (ev = "default") {
-        if (this.ev[ev].handler) {
+        if (this.ev[ev] && this.ev[ev].handler) {
             this.ev[ev].handler.off();
+        } else {
+            this.ev[ev] = {
+                handler : null
+            }
         }
-        this.ev[ev].handler = null;
     }
 
     /**
@@ -159,7 +177,7 @@ class Firegun {
             dataGun = dataGun.get(path);
         });
 
-        let listenerHandler = (value, key, _msg, _ev) => {
+        let listenerHandler = (value : any, key : any , _msg : any, _ev : any) => {
              this.ev[ev] = {
                 handler : _ev
             }
@@ -344,7 +362,7 @@ class Firegun {
      * @param {string} prefix Database Prefix
      * @returns
      */
-    async Get (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{}> {
+    async Get (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{[key:string] : {}}> {
         let path0 = path;
         path = `${prefix}${path}`;
         let paths = path.split("/");
@@ -379,7 +397,7 @@ class Firegun {
      * @param data 
      * @returns
      */
-    async userPut (path: string,data: (string | object),prefix=this.prefix): Promise<Ack> {
+    async userPut (path: string,data: (string | {[key:string] : {}}),prefix=this.prefix): Promise<Ack> {
         return new Promise(async (resolve, reject) => {
             if (this.user.alias) {
                 path = `~${this.user.pair.pub}/${path}`
@@ -402,8 +420,8 @@ class Firegun {
      */
     async Set (path: string,data: {} ,prefix=this.prefix,opt : { opt: { cert: string; }; }=null) : Promise<Ack> {
         return new Promise(async (resolve, reject) => {
-            Crypto.randomBytes(30,(err, buffer) => {
-                var token = buffer.toString('hex');
+            Crypto.randomBytes(30,(err : any, buffer : string) => {
+                var token = buffer;
                 (<any>data).id = token;
                 this.Put(`${path}/${token}`,data,prefix,opt)
                 .then(s=>{
@@ -427,7 +445,7 @@ class Firegun {
      * @param opt option (certificate)
      * @returns 
      */
-    async Put (path: string,data: (string | object),prefix: string=this.prefix,opt:{ opt : { cert : string} }=null): Promise<Ack> {
+    async Put (path: string,data: (string | {[key:string] : {} | string}),prefix: string=this.prefix,opt:{ opt : { cert : string} }=null): Promise<Ack> {
         path = `${prefix}${path}`;
         let paths = path.split("/");
         let dataGun = this.gun;
@@ -439,7 +457,7 @@ class Firegun {
         if (typeof data === "undefined") {
             data = { "t" : "_" }
         }
-        let promises = [];
+        let promises : Promise<Ack>[] = [];
         if (typeof data === "object")
         for (const key in data) {
             if (Object.hasOwnProperty.call(data, key)) {
@@ -472,8 +490,8 @@ class Firegun {
      */
     async Del (path : string) : Promise<Ack> {
         return new Promise(async (resolve, reject) => {
-            Crypto.randomBytes(30,(err, buffer) => {
-                var token = buffer.toString('hex');
+            Crypto.randomBytes(30,(err : any, buffer : string) => {
+                var token = buffer;
                 
                 this.Put(`${path}`,{
                     "#" : token,
@@ -497,12 +515,12 @@ class Firegun {
      * @param prefix node Prefix
      * @returns 
      */
-    async Load (path: string,repeat: number = 1,prefix: string=this.prefix) : Promise<{}> {
+    async Load (path: string,repeat: number = 1,prefix: string=this.prefix) : Promise<any> {
         return new Promise((resolve, reject) => {
-            let promises = [];
-            let obj = {};
+            let promises :Promise<any>[] = []
+            let obj : any = {};
             this.Get(path,repeat,prefix)
-            .then(s=>{
+            .then((s)=>{
                 for (const key in s) {
                     if ( key != "_" && key != "#" && key != ">" ) {
                         const element = s[key];
@@ -524,7 +542,7 @@ class Firegun {
     }
 }
 
-class Chat {
+export class Chat {
 
     firegun : Firegun
     user : FiregunUser
@@ -569,15 +587,15 @@ class Chat {
      * @param date 
      * @returns
      */
-    async retrieve(pubkey: Pubkey, date=[]) {
+    async retrieve(pubkey: Pubkey, date : string[] = []) {
         if (!this.firegun.user.alias) {
             return new Promise(async (resolve, reject) => {
                 reject("User Belum Login")
             });
         } else {
             console.log ("RETRIEVING ...");
-            let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
-            let sortedData = [];
+            let data : {[key:string] : any} = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
+            let sortedData : {}[] = [];
             console.log ("DONE !!");
             for (const key in data) {
                 if (Object.hasOwnProperty.call(data, key)) {
@@ -623,7 +641,7 @@ class Chat {
             } else {
                 msgToHim = msg
             }
-            let cert = <string>await this.firegun.Get(`~${pairkey.pub}/chat-cert`);     
+            let cert = <string><unknown>await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
             let currentdate = new Date(); 
             let year = currentdate.getFullYear();
             let month  = ((currentdate.getMonth()+1) < 10) ? "0" + (currentdate.getMonth()+1) : (currentdate.getMonth()+1);
@@ -681,7 +699,7 @@ class Chat {
      */
     async groupSend(groupowner: Pubkey,groupname: string,msg: string) : Promise<Ack> {
         return new Promise(async (resolve, reject) => {
-            let cert = <string>await this.firegun.Get(`~${groupowner.pub}/chat-group/${groupname}/cert`);
+            let cert = <string><unknown>await this.firegun.Get(`~${groupowner.pub}/chat-group/${groupname}/cert`);
             let currentdate = new Date(); 
             let datetime =  currentdate.getDate() + "/"
                             + (currentdate.getMonth()+1)  + "/" 
@@ -795,7 +813,7 @@ class Chat {
         return (data)        
     }
 
-    async groupBan(pairkey) {
+    async groupBan() {
 
     }
 
@@ -808,5 +826,3 @@ class Chat {
     }
 
 }
-
-module.exports = { Firegun, Chat }
