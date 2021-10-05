@@ -1,4 +1,4 @@
-const { Firegun } = require("../firegun");
+const { Firegun } = require("../firegun-js");
 const fg = new Firegun([],"firedb",true,null,false,8767);
 
 function randomIntFromInterval(min, max) { // min and max included 

@@ -1,6 +1,10 @@
 const path = require('path');
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin")
 
 module.exports = {
+  plugins : [
+    new NodePolyfillPlugin()    
+  ],
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
     fallback: {
@@ -12,11 +16,11 @@ module.exports = {
       "http": false,
       "https": false,
       "stream": false,
-      "crypto": false,
+      "crypto": require.resolve("crypto-browserify"),
     } 
   }, 
   optimization : {
-    minimize : false
+    minimize : true
   },
   module: {
     rules: [
@@ -27,7 +31,7 @@ module.exports = {
       },
     ],
   },  
-  entry: './entry.js',
+  entry: './entry.ts',
   output: {
     path: path.resolve(__dirname, 'public','dist'),
     filename: 'bundle.js',

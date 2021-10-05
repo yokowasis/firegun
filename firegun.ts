@@ -1,5 +1,6 @@
 import * as Gun from "gun";
- 
+import * as Crypto from "crypto"
+
 import 'gun/sea';
 import 'gun/lib/load';
 import 'gun/lib/radix';
@@ -7,18 +8,6 @@ import 'gun/lib/radisk';
 import 'gun/lib/store';
 import 'gun/lib/rindexed';
 import { IGunChainReference } from "gun/types/chain";
-
-const Crypto : any = {}
-
-Crypto.randomBytes = (length : number,callback : (err : any, randomNumbers : string) => void) => {
-    var random_num = new Uint32Array(Math.floor(length/5)); // 2048 = number length in bits
-    var arr = window.crypto.getRandomValues(random_num);
-    var randomNumbers = arr.join("")    
-    randomNumbers =  randomNumbers.slice(0,length);
-    let err = null;
-    callback(err,randomNumbers)
-    return (randomNumbers);
-}
 
 function dynamicSort(property:string) {
     var sortOrder = 1;
@@ -135,7 +124,6 @@ export class Firegun {
         };
         this.ev = {};
     }
-    
     /**
      * Wait in ms
      * @param ms duration of timeout in ms
@@ -420,9 +408,9 @@ export class Firegun {
      */
     async Set (path: string,data: {} ,prefix=this.prefix,opt : { opt: { cert: string; }; }=null) : Promise<Ack> {
         return new Promise(async (resolve, reject) => {
-            Crypto.randomBytes(30,(err : any, buffer : string) => {
+            Crypto.randomBytes(30,(err : any, buffer : Buffer) => {
                 var token = buffer;
-                (<any>data).id = token;
+                (<any>data).id = token.toString('hex');
                 this.Put(`${path}/${token}`,data,prefix,opt)
                 .then(s=>{
                     if (s.err) {
@@ -490,8 +478,8 @@ export class Firegun {
      */
     async Del (path : string) : Promise<Ack> {
         return new Promise(async (resolve, reject) => {
-            Crypto.randomBytes(30,(err : any, buffer : string) => {
-                var token = buffer;
+            Crypto.randomBytes(30,(err : any, buffer : Buffer) => {
+                var token = buffer.toString('hex');
                 
                 this.Put(`${path}`,{
                     "#" : token,

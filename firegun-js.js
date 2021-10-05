@@ -1,6 +1,6 @@
 const Gun = require("gun");
 const Crypto = require('crypto');
- 
+
 require('gun/sea');
 require('gun/lib/load');
 require('gun/lib/radix');
@@ -702,6 +702,5 @@ class Chat {
     }
 
 }
-
 
 module.exports = { Firegun, Chat }
