@@ -84,45 +84,49 @@ window.send = async () => {
 
 window.openChat = async () => {
     let roomname = document.querySelector("#roomname").value;
-    fg.On(`~${fg.user.pair.pub}/chat-with/${users[roomname].pub}/2021/10/03`,async ()=>{
-        let chats = await chat.retrieve(users[roomname],['2021','10','03']);
-        let name1 = fg.user.alias;
-        let name2 = findAlias(users[roomname].pub);
-        let html = "";
-        console.log (chats);
-        for (const key in chats) {
-            if (Object.hasOwnProperty.call(chats, key)) {
-                const chat = chats[key];
-                if (chat._self) {
-                    html += `
-                    <div class="d-flex flex-row mb-3">
-                        <div class="card" style="width: 18rem;">
-                            <div class="card-body">
-                                <h5 class="card-title text-primary fw-bold">${name1}</h5>
-                                <h6 class="card-subtitle mb-2 fs-6 text-muted">${chat.timestamp}</h6>
-                                <p class="card-text">${chat.msg}</p>
+    if (fg.user.alias === "") {
+        console.log ("User Belum Login");
+    } else {
+        fg.On(`~${fg.user.pair.pub}/chat-with/${users[roomname].pub}/2021/10/03`,async ()=>{
+            let chats = await chat.retrieve(users[roomname],['2021','10','03']);
+            let name1 = fg.user.alias;
+            let name2 = findAlias(users[roomname].pub);
+            let html = "";
+            console.log (chats);
+            for (const key in chats) {
+                if (Object.hasOwnProperty.call(chats, key)) {
+                    const chat = chats[key];
+                    if (chat._self) {
+                        html += `
+                        <div class="d-flex flex-row mb-3">
+                            <div class="card" style="width: 18rem;">
+                                <div class="card-body">
+                                    <h5 class="card-title text-primary fw-bold">${name1}</h5>
+                                    <h6 class="card-subtitle mb-2 fs-6 text-muted">${chat.timestamp}</h6>
+                                    <p class="card-text">${chat.msg}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    `;    
-                } else {
-                    html += `
-                    <div class="d-flex flex-row-reverse mb-3">
-                        <div class="card" style="width: 18rem;">
-                            <div class="card-body">
-                                <h5 class="card-title text-primary fw-bold">${name2}</h5>
-                                <h6 class="card-subtitle mb-2 fs-6 text-muted">${chat.timestamp}</h6>
-                                <p class="card-text">${chat.msg}</p>
+                        `;    
+                    } else {
+                        html += `
+                        <div class="d-flex flex-row-reverse mb-3">
+                            <div class="card" style="width: 18rem;">
+                                <div class="card-body">
+                                    <h5 class="card-title text-primary fw-bold">${name2}</h5>
+                                    <h6 class="card-subtitle mb-2 fs-6 text-muted">${chat.timestamp}</h6>
+                                    <p class="card-text">${chat.msg}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    `;    
+                        `;    
+                    }
                 }
             }
-        }
-        document.getElementById("chatMessage").innerHTML = html;
-    })
-    console.log ("ON !!!");
+            document.getElementById("chatMessage").innerHTML = html;
+        })
+        console.log ("ON !!!");    
+    }
 }
 
 window.genAllCert = async () => {

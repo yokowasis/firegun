@@ -481,24 +481,33 @@ export class Chat {
      * @returns
      */
     async retrieve(pubkey, date=[]) {
-        console.log ("RETRIEVING ...");
-        let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
-        let sortedData = [];
-        console.log ("DONE !!");
-        for (const key in data) {
-            if (Object.hasOwnProperty.call(data, key)) {
-                if (pubkey.epub) {
-                    if (data[key]._self) {
-                        data[key].msg = await Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
-                    } else {
-                        data[key].msg = await Gun.SEA.decrypt(data[key].msg, await Gun.SEA.secret(pubkey.epub, this.firegun.user.pair));
+        if (!this.firegun.user.alias) {
+            return new Promise(async (resolve, reject) => {
+                reject("User Belum Login")
+            });
+        } else {
+            console.log ("RETRIEVING ...");
+            let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
+            let sortedData = [];
+            console.log ("DONE !!");
+            for (const key in data) {
+                if (Object.hasOwnProperty.call(data, key)) {
+                    if (pubkey.epub) {
+                        if (data[key]._self) {
+                            data[key].msg = await Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
+                        } else {
+                            data[key].msg = await Gun.SEA.decrypt(data[key].msg, await Gun.SEA.secret(pubkey.epub, this.firegun.user.pair));
+                        }
                     }
                 }
+                sortedData.push(data[key]);
             }
-            sortedData.push(data[key]);
+            sortedData.sort(dynamicSort("timestamp"));
+            return new Promise(async (resolve, reject) => {
+                resolve(sortedData);
+            });
+            
         }
-        sortedData.sort(dynamicSort("timestamp"));
-        return sortedData;
     }
 
     /**
