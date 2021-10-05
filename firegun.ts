@@ -37,10 +37,10 @@ interface FiregunUser {
 }
 
 type Ack = { 
-    "@": string,
+    "@"?: string,
     err: undefined,
-    ok: { "": number },
-    "#": string 
+    ok: { "": number } | string,
+    "#"?: string 
 } | {
     err: Error,
     ok: any
@@ -320,7 +320,7 @@ export class Firegun {
      * @param prefix Database Prefix
      * @returns
      */
-    async userLoad (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{} | undefined> {
+    async userLoad (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{[key : string] : any} | undefined> {
         if (this.user.alias) {
            path = `~${this.user.pair.pub}/${path}`
            return (await this.Load(path,repeat,prefix));
@@ -394,7 +394,7 @@ export class Firegun {
      * @param opt 
      * @returns 
      */
-    async Set (path: string,data: {} ,prefix=this.prefix,opt : { opt: { cert: string; }; }=null) : Promise<Ack> {
+    async Set (path: string,data: {} ,prefix=this.prefix,opt : undefined | { opt: { cert: string; }; }=undefined) : Promise<Ack> {
         return new Promise(async (resolve, reject) => {
             Crypto.randomBytes(30,(err : any, buffer : Buffer) => {
                 var token = buffer;
@@ -421,7 +421,7 @@ export class Firegun {
      * @param opt option (certificate)
      * @returns 
      */
-    async Put (path: string,data: (string | {[key:string] : {} | string}),prefix: string=this.prefix,opt:{ opt : { cert : string} }=null): Promise<Ack> {
+    async Put (path: string,data: (string | {[key:string] : {} | string}),prefix: string=this.prefix,opt:undefined | { opt : { cert : string} }=undefined): Promise<Ack> {
         path = `${prefix}${path}`;
         let paths = path.split("/");
         let dataGun = this.gun;
@@ -449,10 +449,10 @@ export class Firegun {
             Promise.allSettled(promises)
             .then(s=>{
                 dataGun.put(<any>data,(ack)=>{
-                    if (ack.err) {
-                        reject (ack)
-                    } else {
+                    if (ack.err === undefined) {
                         resolve(ack);
+                    } else {
+                        reject (ack)
                     }
                 },opt)    
             })
@@ -474,7 +474,7 @@ export class Firegun {
                     "t" : "_"
                 })
                 .then(s=>{
-                    if (!s.err) {
+                    if (typeof s.err === "undefined") {
                         resolve (s.ok);
                     } else {
                         reject (s.err);
@@ -570,7 +570,7 @@ export class Chat {
             });
         } else {
             console.log ("RETRIEVING ...");
-            let data : {[key:string] : any} = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
+            let data : {[key:string] : any} | undefined = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
             let sortedData : {}[] = [];
             console.log ("DONE !!");
             for (const key in data) {
@@ -710,11 +710,22 @@ export class Chat {
      * 
      * @param groupname 
      */
-     async groupNew(groupname: string) {
+     async groupNew(groupname: string) : Promise<string> {
         // /userspace/chat-group/groupname/cert
         if (this.firegun.user.alias) {
-            this.firegun.userPut(`chat-group/${groupname}/info/name`,groupname)
-            this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify([]));
+            return new Promise(async (resolve, reject) => {
+                let promises:any[] = [];
+                promises.push(this.firegun.userPut(`chat-group/${groupname}/info/name`,groupname))
+                promises.push(this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify([])));
+                Promise.allSettled(promises)
+                .then(s=>{
+                    resolve("OK");
+                })
+                .catch(s=>{
+                    console.log(s);
+                    reject(s);
+                })
+            });
         } else {
             return "User not Logged in"
         }
