@@ -1,32 +1,21 @@
-const Gun = require("gun");
-const Crypto = require('crypto');
+import Gun from "gun";
+import Crypto from "crypto"
  
-require('gun/sea');
-require('gun/lib/load');
-require('gun/lib/radix');
-require('gun/lib/radisk');
-require('gun/lib/store');
-require('gun/lib/rindexed');
+import 'gun/sea';
+import 'gun/lib/load';
+import 'gun/lib/radix';
+import 'gun/lib/radisk';
+import 'gun/lib/store';
+import 'gun/lib/rindexed';
+import { IGunChainReference } from "gun/types/chain";
 
-if (typeof (Crypto.randomBytes) === "undefined") {     
-    Crypto.randomBytes = (length,callback) => {
-        var random_num = new Uint32Array(Math.floor(length/5)); // 2048 = number length in bits
-        var arr = window.crypto.getRandomValues(random_num);
-        var randomNumbers = arr.join("")    
-        randomNumbers =  randomNumbers.slice(0,length);
-        let err = null;
-        callback(err,randomNumbers)
-        return (randomNumbers);
-    }
-}
-
-function dynamicSort(property) {
+function dynamicSort(property:string) {
     var sortOrder = 1;
     if(property[0] === "-") {
         sortOrder = -1;
         property = property.substr(1);
     }
-    return function (a,b) {
+    return function (a : (string | number),b : (string | number)) {
         /* next line works with strings and numbers, 
          * and you may want to customize it to your needs
          */
@@ -34,7 +23,35 @@ function dynamicSort(property) {
         return result * sortOrder;
     }
 }
+
+interface FiregunUser {
+    alias : string,
+    pair : {
+        priv : string,
+        pub : string,
+        epriv : string,
+        epub : string
+    }
+    err? : any
+}
+
 class Firegun {
+
+    prefix = "";
+    gun : IGunChainReference
+    ev = {}
+    emptyUser : FiregunUser = 
+    {
+        alias : "",
+        pair : {
+            priv : "",
+            pub : "",
+            epriv : "",
+            epub : ""
+        }
+    };    
+    user : FiregunUser
+
     /**
      * 
      * --------------------------------------
@@ -48,9 +65,9 @@ class Firegun {
      * @param {string} [prefix=""] Database Prefix
      * @param {boolean} [axe=false] Do You want to use Axe Support ?
      * @param {number} [port=8765] Multicast Port
-     * @param {{}} [gunInstance=null] Bring your own Gun instance
+     * @param {IGunChainReference} [gunInstance=null] Bring your own Gun instance
      */
-    constructor(peers = [""],dbname="fireDB", localstorage=false,prefix="",axe=false,port=8765,gunInstance=null) {
+    constructor(peers: string[] = [""],dbname: string="fireDB", localstorage: boolean=false,prefix: string="",axe: boolean=false,port: number=8765,gunInstance: IGunChainReference=null) {
 
         this.prefix = prefix;
 
@@ -67,20 +84,10 @@ class Firegun {
                 peers : peers
             })    
         }
-        
-        this.user = {
-            alias : "",
-            pair : {
-                priv : "",
-                pub : "",
-                epriv : "",
-                epub : ""
-            }
-        };
-        this.ev = {};
+        this.user = this.emptyUser;
     }
 
-    async _timeout (ms) {
+    async _timeout (ms : number) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
@@ -91,10 +98,9 @@ class Firegun {
         this.ev[ev].handler = null;
     }
 
-    async On (path,callback,ev = "default", different=null,prefix=this.prefix) {
+    async On (path : string,callback:({}) => void,ev = "default", different=true,prefix=this.prefix) {
         path = `${prefix}${path}`;
-        let paths = path;
-        paths = paths.split("/");
+        let paths = path.split("/");        
         let dataGun = this.gun;
         
         paths.forEach(path => {
@@ -109,7 +115,10 @@ class Firegun {
                 callback(JSON.parse(JSON.stringify(value)))
         }
     
-        dataGun.on(listenerHandler,different);
+        //@ts-ignore
+        dataGun.on(listenerHandler,{
+            change : different
+        });
     }        
     
     /**
@@ -120,16 +129,15 @@ class Firegun {
      * hanya saja RAD masih Memiliki BUG, dan tidak bekerja secara consistent
      * @param {string} key must begin with #
      * @param {(string | {})} data If object, it will be stringified automatically
-     * @returns {Promise<({err:Error,ok:any}|{err:undefined,ok:string})>}
+     * @returns {Promise<{err : (Error | undefined), ok : (any)}>}
      */
-     async addContentAdressing (key,data) {
+     async addContentAdressing (key: string,data: ({} | string)  ): Promise<{ err: (Error | undefined); ok: (any); }> {
         if (typeof data === "object") {
             data = JSON.stringify(data);
         }
         let hash = await Gun.SEA.work(data, null, null, {name: "SHA-256"});
         return new Promise((resolve) => {
-            // @ts-ignore
-            this.gun.get(`${key}`).get(hash).put(data,(s)=>{
+            this.gun.get(`${key}`).get(hash).put(<any>data,(s)=>{
                 resolve(s);
             });
         });        
@@ -137,9 +145,9 @@ class Firegun {
     
     /**
      * Generate Key PAIR from SEA module
-     * @returns {Promise<{pub:string,priv:string,epub:string,epriv:string}>}
+     * @returns {Promise<CryptoKeyPair>}
      */
-    async generatePair () {
+    async generatePair (): Promise<{ pub: string; priv: string; epub: string; epriv: string; }> {
         return new Promise(async function (resolve) {
             resolve (await Gun.SEA.pair());
         });        
@@ -149,14 +157,15 @@ class Firegun {
      * 
      * Login using SEA Pair Key, instead of using username and Password
      * 
-     * @param {{pub : string, epub : string, priv : string, epriv : string}} pair SEA Key Pair
-     * @param {string=} alias if ommited, the value is Anonymous
-     * @returns {Promise<({err:Error}|{alias:string,pair:{priv:string,pub:string,epriv:string,epub:string}})>}
+     * @async
+     * @param {CryptoKeyPair} pair SEA Key Pair
+     * @param {string} [alias=Anonymous] if ommited, the value is Anonymous
+     * @returns {Promise<FiregunUser>}
      */
-     async loginPair (pair,alias="Anonymous") {
+     async loginPair (pair: CryptoKeyPair, alias: string = "Anonymous"): Promise<FiregunUser> {
         return new Promise((resolve,reject)=>{
             this.gun.user().auth(pair,(s=>{
-                if (s.err) {
+                if ("err" in s) {
                     reject (s.err)
                 } else {
                     this.user = {
@@ -173,22 +182,22 @@ class Firegun {
      * 
      * Create a new user and Log him in
      * 
+     * @async
      * @param {string} username 
      * @param {string} password 
-     * @returns {Promise<{err : string}|{alias: string,pair: {priv: string,pub: string,epriv: string,epub: string}}>}
+     * @returns {Promise<FiregunUser>}
      */
-    async userNew (username = "", password = "") {
+    async userNew (username: string = "", password: string = ""): Promise<FiregunUser> {
         return new Promise((resolve)=>{
             this.gun.user().create(username,password,async (s)=>{
-                //@ts-ignore
-                if (s && s.err) {
-                    // @ts-ignore
-                    resolve(s);
+                if ("err" in  s) {
+                    console.log(s);
+                    this.user = this.emptyUser
                 } else {
                     this.gun.user().leave();
                     this.user = await this.userLogin(username,password);
-                    resolve(this.user);    
-                }
+                }                
+                resolve(this.user);
             });
         })        
     }
@@ -197,27 +206,27 @@ class Firegun {
      * 
      * Log a user in
      * 
+     * @async
      * @param {string} username 
      * @param {string} password 
      * @param {number} repeat time to repeat the login before give up. Because the nature of decentralization, just because the first time login is failed, doesn't mean the user / password pair doesn't exist in the network
-     * @returns {Promise.<{alias: string,pair: {priv: string,pub: string,epriv: string,epub: string}}>}
+     * @returns {Promise<FiregunUser>}
      */
-    async userLogin (username, password, repeat=2) {
-        return new Promise((resolve)=>{
+    async userLogin (username: string, password: string, repeat: number=2): Promise<FiregunUser>  {
+        return new Promise((resolve,reject)=>{
             this.gun.user().auth(username,password,async (s)=>{
-                //@ts-ignore
-                if (s && s.err) {
+                if ("err" in s) {
                     if (repeat>0) {
                         await this._timeout(1000);
                         resolve (await this.userLogin(username,password,repeat-1));
                     } else {
-                        //@ts-ignore
-                        resolve(s);
+                        this.user = this.emptyUser
+                        this.user.err = s;
+                        reject(this.user);
                     }                    
                 } else {
                     this.user = {
                         alias : username,
-                        //@ts-ignore
                         pair : s.sea,
                     }
                     resolve(this.user);    
@@ -243,7 +252,7 @@ class Firegun {
      * @param {string} [prefix=""] Database Prefix
      * @returns {Promise<{}>}
      */
-    async userGet (path,repeat = 1,prefix=this.prefix) {
+    async userGet (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{}> {
         // @ts-ignore
         if (this.gun.user().is) {
            path = `~${this.user.pair.pub}/${path}`
@@ -260,8 +269,7 @@ class Firegun {
      * @param {string} [prefix=""] Database Prefix
      * @returns {Promise<{}>}
      */
-    async userLoad (path,repeat = 1,prefix=this.prefix) {
-        // @ts-ignore
+    async userLoad (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{}> {
         if (this.gun.user().is) {
            path = `~${this.user.pair.pub}/${path}`
            return (await this.Load(path,repeat,prefix));
@@ -279,7 +287,7 @@ class Firegun {
      * @param {string} [prefix=""] Database Prefix
      * @returns {Promise<{}>}
      */
-    async Get (path,repeat = 1,prefix=this.prefix) {
+    async Get (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{}> {
         let path0 = path;
         path = `${prefix}${path}`;
         let paths = path.split("/");
@@ -314,8 +322,7 @@ class Firegun {
      * @param {(string | object)} data 
      * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>}
      */
-    async userPut (path,data,prefix=this.prefix) {
-        // @ts-ignore
+    async userPut (path: string,data: (string | object),prefix=this.prefix): Promise<({ "@": string; err: undefined; ok: { "": number; }; "#": string; } | { err: Error; ok: any; })> {
         if (this.gun.user().is) {
             path = `~${this.user.pair.pub}/${path}`
             return (await this.Put(path,data,prefix));
@@ -345,7 +352,7 @@ class Firegun {
      * @param {{ opt : { cert : string}}} opt for Certificatge
      * @returns 
      */
-    async Set (path,data,prefix=this.prefix,opt={}) {
+    async Set (path: string,data: {},prefix=this.prefix,opt: { opt: { cert: string; }; }={}) {
         return new Promise(async (resolve, reject) => {
             Crypto.randomBytes(30,(err, buffer) => {
                 var token = buffer.toString('hex');
@@ -372,7 +379,7 @@ class Firegun {
      * @param {{}} [opt={}]
      * @returns {Promise<({"@":string,err:undefined,ok:{"" : number},"#":string}|{ err: Error; ok: any; })>} Promise
      */
-    async Put (path,data,prefix=this.prefix,opt={}) {
+    async Put (path: string,data: (string | object),prefix: string=this.prefix,opt: {}={}): Promise<({ "@": string; err: undefined; ok: { "": number; }; "#": string; } | { err: Error; ok: any; })> {
         path = `${prefix}${path}`;
         let paths = path.split("/");
         let dataGun = this.gun;
@@ -432,7 +439,7 @@ class Firegun {
      * @param {string} [prefix=""] Database Prefix
      * @returns 
      */
-    async Load (path,repeat = 1,prefix=this.prefix) {
+    async Load (path: string,repeat: number = 1,prefix: string=this.prefix) {
         return new Promise((resolve, reject) => {
             let promises = [];
             let obj = {};
@@ -465,7 +472,7 @@ class Chat {
      * 
      * @param {Firegun} firegun Firegun instance
      */
-    constructor(firegun) {
+    constructor(firegun: Firegun) {
         this.firegun = firegun;
         this.user = this.firegun.user;        
     }
@@ -488,7 +495,7 @@ class Chat {
      * @param {date?=[year:number,month:number,date:number]} date 
      * @returns
      */
-    async retrieve(pubkey, date=[]) {
+    async retrieve(pubkey: { pub: string; epub?: string; }, date=[]) {
         console.log ("RETRIEVING ...");
         let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
         let sortedData = [];
@@ -517,7 +524,7 @@ class Chat {
      * @param {string} msg 
      * @returns {Promise<{{ err : {}} | {ok : {"" : 1}}}>}  GunAck
      */
-    async send(pairkey,msg) {
+    async send(pairkey: { pub: string; epub?: string; },msg: string): Promise<{}> {
         if (!this.firegun.user.alias) {
             return new Promise(async (resolve, reject) => {
                 reject("User Belum Login")
@@ -585,7 +592,7 @@ class Chat {
      * @param {string} msg 
      * @returns 
      */
-    async groupSend(groupowner,groupname,msg) {
+    async groupSend(groupowner: { pub: string; },groupname: string,msg: string) {
         return new Promise(async (resolve, reject) => {
             let cert = await this.firegun.Get(`~${groupowner.pub}/chat-group/${groupname}/cert`);
             let currentdate = new Date(); 
@@ -636,7 +643,7 @@ class Chat {
      * 
      * @param {string} groupname 
      */
-     async groupNew(groupname) {
+     async groupNew(groupname: string) {
         // /userspace/chat-group/groupname/cert
         if (this.firegun.user.alias) {
             this.firegun.userPut(`chat-group/${groupname}/info/name`,groupname)
@@ -664,7 +671,7 @@ class Chat {
      * @param {string} groupname
      * @param {{pub : string}} pairkey 
      */
-    async groupInvite(groupname, pairkey) {
+    async groupInvite(groupname: string, pairkey: { pub: string; }) {
         let members = JSON.parse(await this.firegun.userGet(`chat-group/${groupname}/members`));
         members.push(pairkey.pub);        
         let res = await this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify(members))
@@ -675,7 +682,7 @@ class Chat {
      * 
      * @param {{pict : string, desc : string}} info set group info
      */
-    async groupSetInfo(groupname, info = {pict : "", desc: ""}) {
+    async groupSetInfo(groupname, info: { pict: string; desc: string; } = {pict : "", desc: ""}) {
         if (info.pict) {
             this.firegun.userPut(`chat-group/${groupname}/info/pict`,info.pict)
         }

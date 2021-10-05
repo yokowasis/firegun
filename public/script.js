@@ -1,5 +1,5 @@
 import {Firegun, Chat} from '../firegun-browser.js'
-let fg = new Firegun(["https://fire-gun.herokuapp.com/gun"],undefined,true);
+let fg = new Firegun(["https://fire-gun.herokuapp.com/gun"]);
 let chat = new Chat(fg)    
 
 window.fg = fg;
@@ -46,6 +46,17 @@ users.user5 = {
     "epriv": "_4y7hFSlaeD24Kk9FgsIt1RGx0fXLVAsSCh9FQSG180"
 }
 
+document.getElementById('chatmsg').onkeypress = function(e){
+    if (!e) e = window.event;
+    var keyCode = e.code || e.key;
+    if (keyCode == 'Enter'){
+        window.send()
+      return false;
+    }
+  }
+
+window.users = users;
+
 window.findAlias = (pubKey) => {
     for (const key in users) {
         if (Object.hasOwnProperty.call(users, key)) {
@@ -72,14 +83,14 @@ window.login = async () => {
 window.send = async () => {
     console.log ("SENDING CHAT !!!");
     let text = document.querySelector("#chatmsg").value;
-    let tujuan = document.querySelector("#to").value;
+    let tujuan = document.querySelector("#roomname").value;
     try {
-        await chat.send(users[tujuan],text)        
+        await chat.send(users[tujuan],text)
         console.log ("CHAT SENT !!!");
+        document.querySelector("#chatmsg").value = "";
     } catch (error) {
-        console.log (error)        
-    }    
-
+        console.log (error)
+    }
 }
 
 window.openChat = async () => {
