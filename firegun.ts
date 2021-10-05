@@ -1,5 +1,5 @@
-import Gun from "gun";
-import Crypto from "crypto"
+const Gun = require("gun")
+const Crypto = require("crypto")
 
 import 'gun/sea';
 import 'gun/lib/load';
