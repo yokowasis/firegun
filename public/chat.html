@@ -5,14 +5,6 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>    
-    <script src="https://cdn.jsdelivr.net/npm/gun/lib/radix.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/lib/radisk.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/lib/store.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/lib/rindexed.js"></script>    
-    <script type="module" src="./script.js"></script>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" rel="stylesheet">
     <link href="./stylechat.css" rel="stylesheet">
@@ -28,7 +20,7 @@
                             <div class="col">
                                 <div class="card card-bordered">
                                     <div class="card-header">
-                                        <h4 class="card-title"><strong>Chat</strong></h4> <a class="btn btn-xs btn-secondary" href="#" data-abc="true">Let's Chat App</a>
+                                        <h4 class="card-title"><strong>Chat : <span id="chatTo"></span></strong></h4> <a class="btn btn-xs btn-secondary" href="#" data-abc="true">Let's Chat App</a>
                                     </div>
                                     <div class="ps-container ps-theme-default ps-active-y" id="chatMessage" style="overflow-y: scroll !important; height:400px !important;">
                                     </div>
@@ -71,5 +63,7 @@
             </div>
         </div>
     </div>
+    <script src="dist/bundle.js"></script>    
+    <script src="./script.js"></script>
 </body>
 </html>

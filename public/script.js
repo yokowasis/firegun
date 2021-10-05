@@ -1,10 +1,3 @@
-import {Firegun, Chat} from '../firegun-browser.js'
-let fg = new Firegun(["https://fire-gun.herokuapp.com/gun"]);
-let chat = new Chat(fg)    
-
-window.fg = fg;
-window.chat = chat;
-
 let users = {}
 users.user1 = {
     "alias" : "user1",
@@ -47,17 +40,17 @@ users.user5 = {
 }
 
 document.getElementById('chatmsg').onkeypress = function(e){
-    if (!e) e = window.event;
+    if (!e) e = event;
     var keyCode = e.code || e.key;
     if (keyCode == 'Enter'){
-        window.send()
+        send()
       return false;
     }
   }
 
-window.users = users;
+users = users;
 
-window.findAlias = (pubKey) => {
+findAlias = (pubKey) => {
     for (const key in users) {
         if (Object.hasOwnProperty.call(users, key)) {
             const user = users[key];
@@ -69,18 +62,18 @@ window.findAlias = (pubKey) => {
     return "Unknown";
 }
 
-window.test = () => {
+test = () => {
     console.log ("TESTED!!!!");
 }
 
-window.login = async () => {
+login = async () => {
     let user = document.querySelector("#userLogin").value;
     await fg.userLogout()
     await fg.loginPair(users[user],user);
     document.querySelector("#loggedInUser").innerHTML = fg.user.alias;
 }
 
-window.send = async () => {
+send = async () => {
     console.log ("SENDING CHAT !!!");
     let text = document.querySelector("#chatmsg").value;
     let tujuan = document.querySelector("#roomname").value;
@@ -93,13 +86,22 @@ window.send = async () => {
     }
 }
 
-window.openChat = async () => {
+openChat = async () => {
     let roomname = document.querySelector("#roomname").value;
     if (fg.user.alias === "") {
         console.log ("User Belum Login");
     } else {
-        fg.On(`~${fg.user.pair.pub}/chat-with/${users[roomname].pub}/2021/10/03`,async ()=>{
-            let chats = await chat.retrieve(users[roomname],['2021','10','03']);
+        let currentdate = new Date(); 
+        let year = currentdate.getFullYear();
+        let month  = ((currentdate.getMonth()+1) < 10) ? "0" + (currentdate.getMonth()+1) : (currentdate.getMonth()+1);
+        let date = (currentdate.getDate() < 10) ? "0" + (currentdate.getDate()) : (currentdate.getDate());
+        let oldUser2 = document.getElementById("chatTo").innerHTML;
+        fg.Off(`chat/${oldUser2}`);
+        let name2 = document.getElementById("roomname").value;
+        document.getElementById("chatTo").innerHTML = name2;
+        
+        fg.On(`~${fg.user.pair.pub}/chat-with/${users[roomname].pub}/${year}/${month}/${date}`,async ()=>{
+            let chats = await chat.retrieve(users[roomname],[year,month,date]);
             let name1 = fg.user.alias;
             let name2 = findAlias(users[roomname].pub);
             let html = "";
@@ -112,7 +114,6 @@ window.openChat = async () => {
                         <div class="d-flex flex-row mb-3">
                             <div class="card" style="width: 18rem;">
                                 <div class="card-body">
-                                    <h5 class="card-title text-primary fw-bold">${name1}</h5>
                                     <h6 class="card-subtitle mb-2 fs-6 text-muted">${chat.timestamp}</h6>
                                     <p class="card-text">${chat.msg}</p>
                                 </div>
@@ -135,12 +136,12 @@ window.openChat = async () => {
                 }
             }
             document.getElementById("chatMessage").innerHTML = html;
-        })
+        },`chat/${name2}`)
         console.log ("ON !!!");    
     }
 }
 
-window.genAllCert = async () => {
+genAllCert = async () => {
     document.getElementById("certBtn").innerHTML = "Proses ..."
     for (const user in users) {
         if (Object.hasOwnProperty.call(users, user)) {

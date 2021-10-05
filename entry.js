@@ -1,4 +1,4 @@
-import {Firegun, Chat} from './firegun'
+import {Firegun, Chat} from './firegun.ts'
 
 var fg = new Firegun();
 var chat = new Chat(fg);

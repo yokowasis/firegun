@@ -2,6 +2,7 @@ const path = require('path');
 
 module.exports = {
   resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
     fallback: {
       "fs": false,
       "tls": false,
@@ -12,12 +13,20 @@ module.exports = {
       "https": false,
       "stream": false,
       "crypto": false,
-      "crypto-browserify": require.resolve('crypto-browserify'), //if you want to use this module also don't forget npm i crypto-browserify 
     } 
   }, 
   optimization : {
     minimize : false
   },
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+    ],
+  },  
   entry: './entry.js',
   output: {
     path: path.resolve(__dirname, 'public','dist'),
