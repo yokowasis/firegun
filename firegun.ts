@@ -8,6 +8,7 @@ import 'gun/lib/radisk';
 import 'gun/lib/store';
 import 'gun/lib/rindexed';
 import { IGunChainReference } from "gun/types/chain";
+import { IGunCryptoKeyPair } from "gun/types/types";
 
 function dynamicSort(property:string) {
     var sortOrder = 1;
@@ -66,19 +67,6 @@ export class Firegun {
      * 
      * --------------------------------------
      * Create Firegun Instance
-     * 
-     * @param {string[]} [peers=[]] - Peers url
-     * @param {string} [dbname="fireDB"] - Database Name
-     * @param {boolean} [localstorage = false] Method of saving the database. 
-     * - localStorage : true 
-     * - indexedDB : false
-     * @param {string} [prefix=""] Database Prefix
-     * @param {boolean} [axe=false] Do You want to use Axe Support ?
-     * @param {number} [port=8765] Multicast Port
-     * @param {IGunChainReference} [gunInstance=null] Bring your own Gun instance
-     */
-
-    /**
      * 
      * @param peers list of gun Peers, default : []
      * @param dbname dbName, default : "fireDB"
@@ -201,9 +189,9 @@ export class Firegun {
     
     /**
      * Generate Key PAIR from SEA module
-     * @returns {Promise<{pub:string,priv:string,epub:string,epriv:string}>}
+     * @returns
      */
-    async generatePair (): Promise<{ pub: string; priv: string; epub: string; epriv: string; }> {
+    async generatePair (): Promise<IGunCryptoKeyPair> {
         return new Promise(async function (resolve) {
             resolve (await Gun.SEA.pair());
         });        
