@@ -111,24 +111,19 @@ openChat = async () => {
                     const chat = chats[key];
                     if (chat._self) {
                         html += `
-                        <div class="d-flex flex-row mb-3">
-                            <div class="card" style="width: 18rem;">
-                                <div class="card-body">
-                                    <h6 class="card-subtitle mb-2 fs-6 text-muted">${chat.timestamp}</h6>
-                                    <p class="card-text">${chat.msg}</p>
-                                </div>
+                        <div class="media media-chat"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
+                            <div class="media-body">
+                                <p>${chat.msg}</p>
+                                <p class="meta"><time datetime="">${chat.timestamp}</time></p>
                             </div>
-                        </div>
-                        `;    
+                        </div>                    
+                    `;    
                     } else {
                         html += `
-                        <div class="d-flex flex-row-reverse mb-3">
-                            <div class="card" style="width: 18rem;">
-                                <div class="card-body">
-                                    <h5 class="card-title text-primary fw-bold">${name2}</h5>
-                                    <h6 class="card-subtitle mb-2 fs-6 text-muted">${chat.timestamp}</h6>
-                                    <p class="card-text">${chat.msg}</p>
-                                </div>
+                        <div class="media media-chat media-chat-reverse"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
+                            <div class="media-body">
+                                <p>${chat.msg}</p>
+                                <p class="meta"><time datetime="">${chat.timestamp}</time></p>
                             </div>
                         </div>
                         `;    
