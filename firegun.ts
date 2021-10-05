@@ -8,7 +8,6 @@ import 'gun/lib/radisk';
 import 'gun/lib/store';
 import 'gun/lib/rindexed';
 import { IGunChainReference } from "gun/types/chain";
-import ts from "typescript";
 
 function dynamicSort(property:string) {
     var sortOrder = 1;
