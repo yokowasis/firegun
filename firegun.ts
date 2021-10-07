@@ -1,5 +1,4 @@
 const Gun = require("gun")
-const Crypto = require("crypto")
 
 import 'gun/sea';
 import 'gun/lib/load';
@@ -23,6 +22,16 @@ function dynamicSort(property:string) {
         var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
         return result * sortOrder;
     }
+}
+
+function randomAlphaNumeric(length:number):string {
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+           result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;        
 }
 
 interface FiregunUser {
@@ -400,20 +409,18 @@ export class Firegun {
      * @param opt 
      * @returns 
      */
-    async Set (path: string,data: {} ,prefix=this.prefix,opt : undefined | { opt: { cert: string; }; }=undefined) : Promise<Ack> {
+    async Set (path: string,data: {[key : string] : {}} ,prefix=this.prefix,opt : undefined | { opt: { cert: string; }; }=undefined) : Promise<Ack> {
         return new Promise(async (resolve, reject) => {
-            Crypto.randomBytes(30,(err : any, buffer : Buffer) => {
-                var token = buffer;
-                (<any>data).id = token.toString('hex');
-                this.Put(`${path}/${token}`,data,prefix,opt)
-                .then(s=>{
-                    if (s.err) {
-                        reject(s);                        
-                    } else {
-                        resolve(s);
-                    }
-                })
-            });       
+            var token = randomAlphaNumeric(30);
+            data.id = token;
+            this.Put(`${path}/${token}`,data,prefix,opt)
+            .then(s=>{
+                if (s.err) {
+                    reject(s);                        
+                } else {
+                    resolve(s);
+                }
+            })
         })
     }
 
@@ -472,21 +479,18 @@ export class Firegun {
      */
     async Del (path : string) : Promise<Ack> {
         return new Promise(async (resolve, reject) => {
-            Crypto.randomBytes(30,(err : any, buffer : Buffer) => {
-                var token = buffer.toString('hex');
-                
-                this.Put(`${path}`,{
-                    "#" : token,
-                    "t" : "_"
-                })
-                .then(s=>{
-                    if (typeof s.err === "undefined") {
-                        resolve (s.ok);
-                    } else {
-                        reject (s.err);
-                    }
-                })
-            });       
+            var token = randomAlphaNumeric(30);            
+            this.Put(`${path}`,{
+                "#" : token,
+                "t" : "_"
+            })
+            .then(s=>{
+                if (typeof s.err === "undefined") {
+                    resolve (s.ok);
+                } else {
+                    reject (s.err);
+                }
+            })
         })        
     }
 
