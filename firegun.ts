@@ -242,7 +242,7 @@ export class Firegun {
                         reject (user);
                     } else {
                         resolve(this.user);
-                    }                    
+                    }
                 }
             });
         })        
@@ -263,7 +263,13 @@ export class Firegun {
                 if ("err" in  s) {
                     if (repeat>0) {
                         await this._timeout(1000);
-                        resolve (await this.userLogin(username,password,repeat-1));
+                        this.userLogin(username,password,repeat-1)
+                        .then(s=>{
+                            resolve(s)
+                        })
+                        .catch(s=>{
+                            reject(s);
+                        })
                     } else {
                         reject(s);
                         this.userLogout()
