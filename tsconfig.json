@@ -17,6 +17,13 @@
       }
   },
   "include": [
-      "./**/*"
+      "./",
+      "./test/"
+  ],
+  "exclude": [
+      "./radata",
+      "./fireDB",
+      "./node_modules",
+      "./test",
   ]
 }
