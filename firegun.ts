@@ -363,7 +363,10 @@ export class Firegun {
             dataGun = dataGun.get(path);
         });
         
-        return new Promise((resolve) => {
+        return new Promise((resolve,reject) => {
+            setTimeout(() => {
+                reject({ err : "timeout", ket : `TIMEOUT, Possibly Data : ${path} is corrupt`, data : {}});
+            }, 5000);
             dataGun.once(async (s)=>{
                 if (s) {
                     s = JSON.parse(JSON.stringify(s));
@@ -371,9 +374,14 @@ export class Firegun {
                 } else {
                     if (repeat) {
                         await (this._timeout(1000))
-                        resolve (await this.Get(path0,repeat-1,prefix));
+                        try {
+                            let data = await this.Get(path0,repeat-1,prefix)
+                            resolve (data);
+                        } catch (error) {
+                            reject (error)
+                        }                        
                     } else {
-                        resolve (s);
+                        reject({ err : "notfound", ket : `Data Not Found,  Data : ${path} is undefined`, data : {}});
                     }
                 }                
             })            
@@ -452,7 +460,7 @@ export class Firegun {
             if (Object.hasOwnProperty.call(data, key)) {
                 const element = data[key];
                 if (typeof element === "object") {
-                    delete data[key];
+                    delete data[key];                    
                     promises.push(this.Put(`${path}/${key}`,element))
                 }
             }
@@ -460,12 +468,13 @@ export class Firegun {
         
         return new Promise((resolve,reject)=>{
            Promise.allSettled(promises)
-            .then(s=>{               
+            .then(s=>{
                 if (data && Object.keys(data).length === 0) {
                     resolve ({ok : "", err: undefined})
                 } else
                 dataGun.put(<any>data,(ack)=>{
                     if (ack.err === undefined) {
+                        console.log(path,(data as any).username);
                         resolve(ack);
                     } else {
                         reject (ack)
@@ -519,7 +528,12 @@ export class Firegun {
                         if (typeof element === "object") {       
                             promises.push(this.Load(`${path}/${key}`).then(s=>{
                                 obj[key] = s;
-                            }));
+                            })
+                            .catch(s=>{
+                                obj[key] = {}
+                                console.log(s);
+                            })
+                            );
                         } else {
                             obj[key] = element;
                         }
@@ -529,6 +543,12 @@ export class Firegun {
                 .then(s=>{
                     resolve(obj);
                 })
+                .catch(s=>{
+                    reject(s);
+                })
+            })
+            .catch(s=>{
+                reject(s);
             })
         });
     }
