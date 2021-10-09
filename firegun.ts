@@ -459,8 +459,11 @@ export class Firegun {
         }
         
         return new Promise((resolve,reject)=>{
-            Promise.allSettled(promises)
-            .then(s=>{
+           Promise.allSettled(promises)
+            .then(s=>{               
+                if (data && Object.keys(data).length === 0) {
+                    resolve ({ok : "", err: undefined})
+                } else
                 dataGun.put(<any>data,(ack)=>{
                     if (ack.err === undefined) {
                         resolve(ack);
@@ -468,6 +471,9 @@ export class Firegun {
                         reject (ack)
                     }
                 },opt)    
+            })
+            .catch(s=>{
+                reject(s);
             })
         });
     }
