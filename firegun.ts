@@ -516,10 +516,10 @@ export class Firegun {
      * @param prefix node Prefix
      * @returns 
      */
-    async Load (path: string,async=false,repeat: number = 1,prefix: string=this.prefix) : Promise<any> {
+    async Load (path: string,async=false,repeat: number = 1,prefix: string=this.prefix) : Promise<{data : {[s:string] : {}}, err : string[]}> {
         return new Promise((resolve, reject) => {
             let promises :Promise<any>[] = []
-            let obj : any = {};
+            let obj : {data : {[s:string] : {}}, err : string[]} = { data : {}, err : []};
             this.Get(path,repeat,prefix)
             .then(async (s)=>{
                 for (const key in s) {
@@ -527,26 +527,25 @@ export class Firegun {
                         const element = s[key];
                         if (typeof element === "object") {
                             if (async) {
-                                promises.push(await <any>this.Load(`${path}/${key}`).then(s=>{
-                                    obj[key] = s;
-                                })
-                                .catch(s=>{
-                                    obj[key] = {}
-                                    console.log(s);
-                                })
-                                );    
+                                try {
+                                    let s = await <any>this.Load(`${path}/${key}`,async);
+                                    obj.data[key] = s;
+                                } catch (error) {
+                                    obj.err.push(error)
+                                    console.log(error);
+                                }
                             } else {
-                                promises.push(this.Load(`${path}/${key}`).then(s=>{
-                                    obj[key] = s;
+                                promises.push(this.Load(`${path}/${key}`,async).then(s=>{
+                                    obj.data[key] = s;
                                 })
                                 .catch(s=>{
-                                    obj[key] = {}
+                                    obj.err.push(s)
                                     console.log(s);
                                 })
                                 );    
                             }
                         } else {
-                            obj[key] = element;
+                            obj.data[key] = element;
                         }
                     }
                 }
@@ -556,12 +555,12 @@ export class Firegun {
                 })
                 .catch(s=>{
                     console.log (s);
-                    resolve({});
+                    resolve(obj);
                 })
             })
             .catch(s=>{
                 console.log (s);
-                resolve({});
+                resolve(obj);
             })
         });
     }
