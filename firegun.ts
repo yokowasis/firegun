@@ -365,7 +365,7 @@ export class Firegun {
         
         return new Promise((resolve,reject) => {
             setTimeout(() => {
-                reject({ err : "timeout", ket : `TIMEOUT, Possibly Data : ${path} is corrupt`, data : {}});
+                reject({ err : "timeout", ket : `TIMEOUT, Possibly Data : ${path} is corrupt`, data : {}, "#" : path});
             }, 5000);
             dataGun.once(async (s)=>{
                 if (s) {
@@ -381,7 +381,7 @@ export class Firegun {
                             reject (error)
                         }                        
                     } else {
-                        reject({ err : "notfound", ket : `Data Not Found,  Data : ${path} is undefined`, data : {}});
+                        reject({ err : "notfound", ket : `Data Not Found,  Data : ${path} is undefined`, data : {}, "#" : path});
                     }
                 }                
             })            
@@ -516,10 +516,11 @@ export class Firegun {
      * @param prefix node Prefix
      * @returns 
      */
-    async Load (path: string,async=false,repeat: number = 1,prefix: string=this.prefix) : Promise<{data : {[s:string] : {}}, err : string[]}> {
+    async Load (path: string,async=false,repeat: number = 1,prefix: string=this.prefix) : Promise<{data : {[s:string] : {}}, err : {path : string, err : string}[]}> {
+        console.log(path);
         return new Promise((resolve, reject) => {
             let promises :Promise<any>[] = []
-            let obj : {data : {[s:string] : {}}, err : string[]} = { data : {}, err : []};
+            let obj : {data : {[s:string] : {}}, err : {path : string, err : string}[]} = { data : {}, err : []};
             this.Get(path,repeat,prefix)
             .then(async (s)=>{
                 for (const key in s) {
@@ -532,7 +533,6 @@ export class Firegun {
                                     obj.data[key] = s;
                                 } catch (error) {
                                     obj.err.push(error)
-                                    console.log(error);
                                 }
                             } else {
                                 promises.push(this.Load(`${path}/${key}`,async).then(s=>{
@@ -540,7 +540,6 @@ export class Firegun {
                                 })
                                 .catch(s=>{
                                     obj.err.push(s)
-                                    console.log(s);
                                 })
                                 );    
                             }
@@ -554,12 +553,12 @@ export class Firegun {
                     resolve(obj);
                 })
                 .catch(s=>{
-                    console.log (s);
+                    obj.err.push(s)
                     resolve(obj);
                 })
             })
             .catch(s=>{
-                console.log (s);
+                obj.err.push(s)
                 resolve(obj);
             })
         });
