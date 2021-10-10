@@ -1,7 +1,14 @@
 import Gun from 'gun';
 import {Firegun} from './firegun'
 
-const gun = Gun();
+const gun = Gun({
+    "file" : "radata2",
+    "localStorage" : true,
+    "radisk" : false,
+    "uuid" : function () {
+        return "asd";
+      }
+});
 const fg = new Firegun(undefined,"radata",undefined,undefined,undefined,8766)
 var arr:{[x:string] : any} = {};
 
@@ -9,9 +16,9 @@ console.time("FINISH")
 
 function generateDataFG() {
     var k=1;
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 1; i++) {
         arr[i.toString()] = {}
-        for (let j = 0; j <= 100; j++) {
+        for (let j = 1; j <= 1000; j++) {
             arr[i.toString()][j.toString()] = {
                 username : `username-${i}-${j}`,
                 nis : `nis-${i}-${j}`,
@@ -26,7 +33,7 @@ function generateDataFG() {
     fg.Put("siswa/IX/IT",arr)
     .then(s=>{
         console.log(s);
-        console.timeEnd("GO")
+        console.timeEnd("FINISH")
     })
     .catch(s=>{
         console.log(s);
@@ -37,12 +44,12 @@ function generateDataFG() {
 function generateDataGun() {
     gun.get("siswa").get("IX").get("IT").put(arr,ack=>{
         console.log (ack);
-        console.timeEnd("GO")
+        console.timeEnd("FINISH")
     })    
 }
 
 async function loadDataFG() {
-    let s = await fg.Load(`siswa/IX/IT/2`,true)
+    let s = await fg.Load(`siswa/IX/IT/1/617`,true)
     console.log(s);
     console.timeEnd("FINISH");
 }
@@ -57,3 +64,7 @@ function loadDataGun() {
 loadDataFG();
 // loadDataGun();
 // generateDataFG();
+
+// var s = gun.get("test").get("test2").get("test3").put({paste : "ASDASDAS"});
+// @ts-ignore
+// console.log(s["_"].root.next.test.soul);
