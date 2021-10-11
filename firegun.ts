@@ -396,7 +396,7 @@ export class Firegun {
      * @param data 
      * @returns
      */
-    async userPut (path: string,data: (string | {[key:string] : {}}),async=false, prefix=this.prefix): Promise<Ack[]> {
+    async userPut (path: string,data: (string | {[key:string] : {}}),async=false, prefix=this.prefix): Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
             if (this.user.alias) {
                 path = `~${this.user.pair.pub}/${path}`
@@ -417,7 +417,7 @@ export class Firegun {
      * @param opt 
      * @returns 
      */
-    async Set (path: string,data: {[key : string] : {}} ,async=false, prefix=this.prefix,opt : undefined | { opt: { cert: string; }; }=undefined) : Promise<Ack[]> {
+    async Set (path: string,data: {[key : string] : {}} ,async=false, prefix=this.prefix,opt : undefined | { opt: { cert: string; }; }=undefined) : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
             var token = randomAlphaNumeric(30);
             data.id = token;
@@ -438,7 +438,7 @@ export class Firegun {
      * @param opt option (certificate)
      * @returns 
      */
-    async Put (path: string,data: (string | {[key:string] : {} | string}),async = false, prefix: string=this.prefix,opt:undefined | { opt : { cert : string} }=undefined): Promise<Ack[]> {
+    async Put (path: string,data: (string | {[key:string] : {} | string}),async = false, prefix: string=this.prefix,opt:undefined | { opt : { cert : string} }=undefined): Promise<{data : Ack[],error : Ack[]}> {
         path = `${prefix}${path}`;
         if (async) { console.log(path) }
         let paths = path.split("/");
@@ -453,7 +453,7 @@ export class Firegun {
         }
         let promises : Promise<Ack>[] = [];
         if (typeof data === "object")
-        var obj:Ack[] = [];
+        var obj:{data : Ack[],error : Ack[]} = { data: [] , error : []};
         if (typeof data == "object")
         for (const key in data) {
             if (Object.hasOwnProperty.call(data, key)) {
@@ -462,12 +462,14 @@ export class Firegun {
                     delete data[key];
                     if (async) {
                         let s = await this.Put(`${path}/${key}`,element,async)
-                        obj = [...obj, ...s]
+                        obj.data = [...obj.data, ...s.data]
+                        obj.error = [...obj.error, ...s.error]
                     } else {
                         promises.push(
                             this.Put(`${path}/${key}`,element,async)
                             .then(s=>{
-                                obj = [...obj, ...s]
+                                obj.data = [...obj.data, ...s.data]
+                                obj.error = [...obj.error, ...s.error]
                             })
                         )    
                     }
@@ -483,20 +485,21 @@ export class Firegun {
                     resolve (obj)
                 } else {
                     setTimeout(() => {
-                        reject({ err : "timeout", ket : `TIMEOUT, Failed to put : ${path}`, data : {}, "#" : path});
-                    }, 2000);
+                        obj.error.push({ err : Error("TIMEOUT, Failed to put Data"), ok : path});
+                        resolve (obj);
+                    }, 10);
                     dataGun.put(<any>data,(ack)=>{
                         if (ack.err === undefined) {
-                            obj.push(ack);
+                            obj.data.push(ack);
                         } else {
-                            obj.push({ err : Error(JSON.stringify(ack)), ok : path});
+                            obj.error.push({ err : Error(JSON.stringify(ack)), ok : path});
                         }
                         resolve(obj);
                     },opt)
                 }
             })
             .catch(s=>{
-                obj.push({ err : Error(JSON.stringify(s)), ok : path});
+                obj.error.push({ err : Error(JSON.stringify(s)), ok : path});
                 resolve(obj)
             })
         });
@@ -507,7 +510,7 @@ export class Firegun {
      * @param path 
      * @returns 
      */
-    async Del (path : string) : Promise<Ack[]> {
+    async Del (path : string) : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
             var token = randomAlphaNumeric(30);            
             this.Put(`${path}`,{
@@ -594,7 +597,7 @@ export class Chat {
      * Generate Public Certificate for Logged in User
      * @returns 
      */
-    async generatePublicCert() : Promise<Ack[]> {
+    async generatePublicCert() : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
             if (this.firegun.user.alias) {
                 // BUG Blacklist Work Around
@@ -731,7 +734,7 @@ export class Chat {
      * @param msg 
      * @returns 
      */
-    async groupSend(groupowner: Pubkey,groupname: string,msg: string) : Promise<Ack[]> {
+    async groupSend(groupowner: Pubkey,groupname: string,msg: string) : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
             let cert = <string><unknown>await this.firegun.Get(`~${groupowner.pub}/chat-group/${groupname}/cert`);
             let currentdate = new Date(); 
@@ -795,7 +798,7 @@ export class Chat {
      * 
      * @param groupname
      */
-    async groupUpdateCert(groupname : string) : Promise<Ack[]> {
+    async groupUpdateCert(groupname : string) : Promise<{data : Ack[],error : Ack[]}> {
         // BUG Blacklis Work Around
         // await this.firegun.userPut(`chat-group/${groupname}/banlist`,{
         //     "t" : "_"
