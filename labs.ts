@@ -18,7 +18,7 @@ function generateDataFG() {
     var k=1;
     for (let i = 1; i <= 1; i++) {
         arr[i.toString()] = {}
-        for (let j = 1; j <= 1000; j++) {
+        for (let j = 1; j <= 100; j++) {
             arr[i.toString()][j.toString()] = {
                 username : `username-${i}-${j}`,
                 nis : `nis-${i}-${j}`,
@@ -32,13 +32,12 @@ function generateDataFG() {
     }
     fg.Put("siswa/IX/IT",arr)
     .then(s=>{
-        console.log(s);
+        console.log(s, s.length);
         console.timeEnd("FINISH")
     })
     .catch(s=>{
         console.log(s);
-    })
-    
+    })    
 }
 
 function generateDataGun() {
@@ -61,9 +60,9 @@ function loadDataGun() {
     })
 }
 
-loadDataFG();
+// loadDataFG();
 // loadDataGun();
-// generateDataFG();
+generateDataFG();
 
 // var s = gun.get("test").get("test2").get("test3").put({paste : "ASDASDAS"});
 // @ts-ignore

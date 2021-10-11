@@ -53,7 +53,7 @@ type Ack = {
 } | {
     err: Error,
     ok: any
-};
+} | void;
 
 interface Pubkey {
     pub: string,
@@ -396,7 +396,7 @@ export class Firegun {
      * @param data 
      * @returns
      */
-    async userPut (path: string,data: (string | {[key:string] : {}}),prefix=this.prefix): Promise<Ack> {
+    async userPut (path: string,data: (string | {[key:string] : {}}),prefix=this.prefix): Promise<Ack[]> {
         return new Promise(async (resolve, reject) => {
             if (this.user.alias) {
                 path = `~${this.user.pair.pub}/${path}`
@@ -417,17 +417,13 @@ export class Firegun {
      * @param opt 
      * @returns 
      */
-    async Set (path: string,data: {[key : string] : {}} ,prefix=this.prefix,opt : undefined | { opt: { cert: string; }; }=undefined) : Promise<Ack> {
+    async Set (path: string,data: {[key : string] : {}} ,prefix=this.prefix,opt : undefined | { opt: { cert: string; }; }=undefined) : Promise<Ack[]> {
         return new Promise(async (resolve, reject) => {
             var token = randomAlphaNumeric(30);
             data.id = token;
             this.Put(`${path}/${token}`,data,prefix,opt)
             .then(s=>{
-                if (s.err) {
-                    reject(s);                        
-                } else {
-                    resolve(s);
-                }
+                resolve(s);
             })
         })
     }
@@ -442,7 +438,7 @@ export class Firegun {
      * @param opt option (certificate)
      * @returns 
      */
-    async Put (path: string,data: (string | {[key:string] : {} | string}),prefix: string=this.prefix,opt:undefined | { opt : { cert : string} }=undefined): Promise<Ack> {
+    async Put (path: string,data: (string | {[key:string] : {} | string}),prefix: string=this.prefix,opt:undefined | { opt : { cert : string} }=undefined): Promise<Ack[]> {
         path = `${prefix}${path}`;
         let paths = path.split("/");
         let dataGun = this.gun;
@@ -456,12 +452,19 @@ export class Firegun {
         }
         let promises : Promise<Ack>[] = [];
         if (typeof data === "object")
+        var obj:Ack[] = [];
+        if (typeof data == "object")
         for (const key in data) {
             if (Object.hasOwnProperty.call(data, key)) {
                 const element = data[key];
                 if (typeof element === "object") {
                     delete data[key];                    
-                    promises.push(this.Put(`${path}/${key}`,element))
+                    promises.push(
+                        this.Put(`${path}/${key}`,element)
+                        .then(s=>{
+                            obj = [...obj, ...s]
+                        })
+                    )
                 }
             }
         }
@@ -469,20 +472,26 @@ export class Firegun {
         return new Promise((resolve,reject)=>{
            Promise.allSettled(promises)
             .then(s=>{
+                // Handle Empty Object
                 if (data && Object.keys(data).length === 0) {
-                    resolve ({ok : "", err: undefined})
-                } else
-                dataGun.put(<any>data,(ack)=>{
-                    if (ack.err === undefined) {
-                        console.log(path,(data as any).username);
-                        resolve(ack);
-                    } else {
-                        reject (ack)
-                    }
-                },opt)    
+                    resolve (obj)
+                } else {
+                    setTimeout(() => {
+                        reject({ err : "timeout", ket : `TIMEOUT, Failed to put : ${path}`, data : {}, "#" : path});
+                    }, 2000);
+                    dataGun.put(<any>data,(ack)=>{
+                        if (ack.err === undefined) {
+                            obj.push(ack);
+                        } else {
+                            obj.push({ err : Error(JSON.stringify(ack)), ok : path});
+                        }
+                        resolve(obj);
+                    },opt)
+                }
             })
             .catch(s=>{
-                reject(s);
+                obj.push({ err : Error(JSON.stringify(s)), ok : path});
+                resolve(obj)
             })
         });
     }
@@ -492,7 +501,7 @@ export class Firegun {
      * @param path 
      * @returns 
      */
-    async Del (path : string) : Promise<Ack> {
+    async Del (path : string) : Promise<Ack[]> {
         return new Promise(async (resolve, reject) => {
             var token = randomAlphaNumeric(30);            
             this.Put(`${path}`,{
@@ -500,11 +509,7 @@ export class Firegun {
                 "t" : "_"
             })
             .then(s=>{
-                if (typeof s.err === "undefined") {
-                    resolve (s.ok);
-                } else {
-                    reject (s.err);
-                }
+                resolve(s);
             })
         })        
     }
@@ -583,7 +588,7 @@ export class Chat {
      * Generate Public Certificate for Logged in User
      * @returns 
      */
-    async generatePublicCert() : Promise<Ack> {
+    async generatePublicCert() : Promise<Ack[]> {
         return new Promise(async (resolve, reject) => {
             if (this.firegun.user.alias) {
                 // BUG Blacklist Work Around
@@ -720,7 +725,7 @@ export class Chat {
      * @param msg 
      * @returns 
      */
-    async groupSend(groupowner: Pubkey,groupname: string,msg: string) : Promise<Ack> {
+    async groupSend(groupowner: Pubkey,groupname: string,msg: string) : Promise<Ack[]> {
         return new Promise(async (resolve, reject) => {
             let cert = <string><unknown>await this.firegun.Get(`~${groupowner.pub}/chat-group/${groupname}/cert`);
             let currentdate = new Date(); 
@@ -784,7 +789,7 @@ export class Chat {
      * 
      * @param groupname
      */
-    async groupUpdateCert(groupname : string) : Promise<Ack> {
+    async groupUpdateCert(groupname : string) : Promise<Ack[]> {
         // BUG Blacklis Work Around
         // await this.firegun.userPut(`chat-group/${groupname}/banlist`,{
         //     "t" : "_"
