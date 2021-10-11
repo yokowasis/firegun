@@ -487,7 +487,7 @@ export class Firegun {
                     setTimeout(() => {
                         obj.error.push({ err : Error("TIMEOUT, Failed to put Data"), ok : path});
                         resolve (obj);
-                    }, 10);
+                    }, 2000);
                     dataGun.put(<any>data,(ack)=>{
                         if (ack.err === undefined) {
                             obj.data.push(ack);

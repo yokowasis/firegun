@@ -32,7 +32,7 @@ function generateDataFG() {
     }
     fg.Put("siswa/IX/IT",arr,true)
     .then(s=>{
-        // console.log(s, s.length);
+        console.log(s, s.data.length, s.error.length);
         console.timeEnd("FINISH")
     })
     .catch(s=>{
