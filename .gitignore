@@ -1,5 +1,6 @@
 fireDB
 test.js
+test.mjs
 package-lock.json
 node_modules
 *.txt
