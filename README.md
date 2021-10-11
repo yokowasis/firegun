@@ -39,6 +39,9 @@ npm i gun @yokowasis/firegun
 ## Include the module
 ```
 import { Firegun } from '@yokowasis/firegun'
+// or
+const Fg = require('@yokowasis/firegun');
+const Firegun = Fg.Firegun;
 ```
 ## Initialization
 ```
