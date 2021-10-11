@@ -396,11 +396,11 @@ export class Firegun {
      * @param data 
      * @returns
      */
-    async userPut (path: string,data: (string | {[key:string] : {}}),prefix=this.prefix): Promise<Ack[]> {
+    async userPut (path: string,data: (string | {[key:string] : {}}),async=false, prefix=this.prefix): Promise<Ack[]> {
         return new Promise(async (resolve, reject) => {
             if (this.user.alias) {
                 path = `~${this.user.pair.pub}/${path}`
-                resolve (await this.Put(path,data,prefix));
+                resolve (await this.Put(path,data,async, prefix));
              } else {
                 reject (<Ack>{err : new Error("User Belum Login") , ok : undefined});
              }     
@@ -417,11 +417,11 @@ export class Firegun {
      * @param opt 
      * @returns 
      */
-    async Set (path: string,data: {[key : string] : {}} ,prefix=this.prefix,opt : undefined | { opt: { cert: string; }; }=undefined) : Promise<Ack[]> {
+    async Set (path: string,data: {[key : string] : {}} ,async=false, prefix=this.prefix,opt : undefined | { opt: { cert: string; }; }=undefined) : Promise<Ack[]> {
         return new Promise(async (resolve, reject) => {
             var token = randomAlphaNumeric(30);
             data.id = token;
-            this.Put(`${path}/${token}`,data,prefix,opt)
+            this.Put(`${path}/${token}`,data,async,prefix,opt)
             .then(s=>{
                 resolve(s);
             })
@@ -438,8 +438,9 @@ export class Firegun {
      * @param opt option (certificate)
      * @returns 
      */
-    async Put (path: string,data: (string | {[key:string] : {} | string}),prefix: string=this.prefix,opt:undefined | { opt : { cert : string} }=undefined): Promise<Ack[]> {
+    async Put (path: string,data: (string | {[key:string] : {} | string}),async = false, prefix: string=this.prefix,opt:undefined | { opt : { cert : string} }=undefined): Promise<Ack[]> {
         path = `${prefix}${path}`;
+        if (async) { console.log(path) }
         let paths = path.split("/");
         let dataGun = this.gun;
 
@@ -458,13 +459,18 @@ export class Firegun {
             if (Object.hasOwnProperty.call(data, key)) {
                 const element = data[key];
                 if (typeof element === "object") {
-                    delete data[key];                    
-                    promises.push(
-                        this.Put(`${path}/${key}`,element)
-                        .then(s=>{
-                            obj = [...obj, ...s]
-                        })
-                    )
+                    delete data[key];
+                    if (async) {
+                        let s = await this.Put(`${path}/${key}`,element,async)
+                        obj = [...obj, ...s]
+                    } else {
+                        promises.push(
+                            this.Put(`${path}/${key}`,element,async)
+                            .then(s=>{
+                                obj = [...obj, ...s]
+                            })
+                        )    
+                    }
                 }
             }
         }
@@ -690,7 +696,7 @@ export class Chat {
                     "timestamp" : datetime, 
                     "msg" : msgToHim, 
                     "status" : "sent"
-                },undefined,{
+                },true, undefined,{
                     opt : {
                         cert : cert
                     }
@@ -742,7 +748,7 @@ export class Chat {
                 "timestamp" : datetime, 
                 "msg" : msg, 
                 status : "sent"
-            },undefined,{
+            },true, undefined,{
                 opt : {
                     cert : cert
                 }

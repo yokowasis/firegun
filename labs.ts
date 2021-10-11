@@ -30,9 +30,9 @@ function generateDataFG() {
             };
         }
     }
-    fg.Put("siswa/IX/IT",arr)
+    fg.Put("siswa/IX/IT",arr,true)
     .then(s=>{
-        console.log(s, s.length);
+        // console.log(s, s.length);
         console.timeEnd("FINISH")
     })
     .catch(s=>{
