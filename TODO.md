@@ -1,2 +1,2 @@
-- Error Handling Put dengan timeout, sehingga tidak block. Reject dan catat data yang gagal tersimpan.
-- Load data berikan option mau pilihan await (hemat memory tapi lambat), atau callback (makan memori banyak tapi lebih cepat)
+- Illusion of Low latency for chat
+- 
