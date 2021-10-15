@@ -12,7 +12,6 @@
     - [Get](#get)
     - [Load](#load)
     - [Put](#put)
-    - [Put](#put-1)
   - [Userspace](#userspace)
     - [Create new User (it logged them in automatically)](#create-new-user-it-logged-them-in-automatically)
     - [Login User](#login-user)
@@ -73,13 +72,10 @@ let data = await fg.Load("path/to/the/things")
 ### Put
 ```
 let success = await fg.Put("path/to/the/things",{
-    "hello" : "world"
-})
-```
-### Put
-```
-let success = await fg.Put("path/to/the/things",{
-    "hello" : "world"
+    "hello" : "world",
+    "parent" : {
+      "nested" : "data"
+    }
 })
 ```
 ## Userspace
