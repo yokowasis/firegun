@@ -121,12 +121,21 @@ let success = await fg.userPut ("mydata",{
 ### Put Permanent Readonly Content 
 ```
 //Key Must begin with "#"
-let success = fg.addContentAdressing ("#permanentStuff",{
+let success = fg.addContentAdressing("#permanentStuff",{
     "Hello" : "Can't Touch Me"
 })
 
 //Try to read it
 let data = await fg.Get("#permanentStuff");
+for (const key in data) {
+  const element = data[key];
+  console.log (element);
+}
+
+//or using gun.map()
+fg.gun.get("#permanentStuff").map().once(element=>{
+    console.log (element)
+})
 
 //Try to change it
 let success = await fg.Put("#permanentStuff",{

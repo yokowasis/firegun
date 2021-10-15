@@ -353,7 +353,7 @@ export class Firegun {
      * @param {string} prefix Database Prefix
      * @returns
      */
-    async Get (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<undefined | {[key:string] : {}}> {
+    async Get (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<undefined | string |  {[key:string] : {}}> {
         let path0 = path;
         path = `${prefix}${path}`;
         let paths = path.split("/");
@@ -537,9 +537,15 @@ export class Firegun {
             let obj : {data : {[s:string] : {}}, err : {path : string, err : string}[]} = { data : {}, err : []};
             this.Get(path,repeat,prefix)
             .then(async (s)=>{
+                if (typeof s === "object")
                 for (const key in s) {
                     if ( key != "_" && key != "#" && key != ">" ) {
-                        const element = s[key];
+                        var element;
+                        if (typeof s === "object") {
+                            element = s[key];
+                        } else {
+                            element = s;
+                        }
                         if (typeof element === "object") {
                             if (async) {
                                 try {
