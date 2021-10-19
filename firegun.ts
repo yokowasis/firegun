@@ -1,4 +1,4 @@
-const Gun = require("gun")
+export const Gun = require("gun")
 
 import 'gun/sea';
 import 'gun/lib/load';
@@ -597,6 +597,16 @@ export class Chat {
     constructor(firegun: Firegun) {
         this.firegun = firegun;
         this.user = this.firegun.user;        
+    }
+
+    async getCert(pubKey:string) {
+        try {
+            let cert = await this.firegun.Get(`~${pubKey}/chat-cert`);
+            return cert;
+        } catch (error) {
+            console.log (error);
+            return "";
+        }
     }
 
     /**
