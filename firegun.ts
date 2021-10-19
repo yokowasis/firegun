@@ -71,19 +71,19 @@ export default class Firegun {
 
         // Auto Login
 
+        this.user = {
+            alias : "",
+            pair : {
+                priv : "",
+                pub : "",
+                epriv : "",
+                epub : ""
+            }
+        };
         let user = localStorage.getItem("fg.keypair");
         try {
             this.user = JSON.parse(user);            
         } catch (error) {
-            this.user = {
-                alias : "",
-                pair : {
-                    priv : "",
-                    pub : "",
-                    epriv : "",
-                    epub : ""
-                }
-            };
         }
         
         this.ev = {};
