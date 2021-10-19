@@ -463,6 +463,9 @@ export default class Firegun {
                         resolve (obj);
                     }, 2000);
                     dataGun.put(<any>data,(ack)=>{
+                        if (typeof obj === "undefined") {
+                            obj = { data: [] , error : []};
+                        }
                         if (ack.err === undefined) {
                             obj.data.push(ack);
                         } else {
