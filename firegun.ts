@@ -174,9 +174,12 @@ export default class Firegun {
      * @param alias if ommited, the value is Anonymous
      * @returns 
      */
-     async loginPair (pair: CryptoKeyPair ,alias: string="Anonymous"): Promise<({ err: Error; } | FiregunUser )> {
+     async loginPair (pair: IGunCryptoKeyPair ,alias: string=""): Promise<({ err: Error; } | FiregunUser )> {
+        if (alias === "") {
+            alias = pair.pub.slice(0,8);
+        }
         return new Promise((resolve,reject)=>{
-            this.gun.user().auth(pair,(s=>{
+            this.gun.user().auth(pair as any,(s=>{
                 if ("err" in s) {
                     this.userLogout()
                     reject (s.err)
