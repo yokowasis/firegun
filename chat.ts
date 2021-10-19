@@ -1,21 +1,6 @@
 import Gun from 'gun'
 import Firegun from "./firegun";
-import { Pubkey, FiregunUser, Ack } from './types'
-
-function dynamicSort(property:string) {
-    var sortOrder = 1;
-    if(property[0] === "-") {
-        sortOrder = -1;
-        property = property.substr(1);
-    }
-    return function (a : any,b : any) {
-        /* next line works with strings and numbers, 
-         * and you may want to customize it to your needs
-         */
-        var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
-        return result * sortOrder;
-    }
-}
+import { Pubkey, FiregunUser, Ack, common } from './common'
 
 export default class Chat {
 
@@ -46,23 +31,7 @@ export default class Chat {
      * @returns 
      */
     async generatePublicCert() : Promise<{data : Ack[],error : Ack[]}> {
-        return new Promise(async (resolve, reject) => {
-            if (this.firegun.user.alias) {
-                // BUG Blacklist Work Around
-                // await this.firegun.userPut("chat-blacklist",{
-                //     "t" : "_"
-                // })
-                
-                // @ts-ignore
-                let cert = await Gun.SEA.certify("*", [{ "*" : "chat-with","+" : "*"}], this.firegun.user.pair,null,{
-                    // block : 'chat-blacklist' //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
-                });
-                let ack = await this.firegun.userPut("chat-cert",cert);
-                resolve (ack);    
-            } else {
-                reject ("User belum Login")
-            }
-        });
+        return await common.generatePublicCert(this.firegun);
     }
 
     /**
@@ -95,7 +64,7 @@ export default class Chat {
                 }
                 sortedData.push(data[key]);
             }
-            sortedData.sort(dynamicSort("timestamp"));
+            sortedData.sort(common.dynamicSort("timestamp"));
             return new Promise(async (resolve, reject) => {
                 resolve(sortedData);
             });

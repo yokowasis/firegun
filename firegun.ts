@@ -6,7 +6,7 @@ import 'gun/lib/radisk';
 import 'gun/lib/store';
 import 'gun/lib/rindexed';
 
-import { FiregunUser, Ack } from './types'
+import { FiregunUser, Ack, common } from './common'
 import { IGunChainReference } from "gun/types/chain";
 import { IGunCryptoKeyPair } from "gun/types/types";
 
@@ -223,6 +223,7 @@ export default class Firegun {
                         reject (user);
                     } else {
                         resolve(this.user);
+                        common.generatePublicCert(this)
                     }
                 }
             });
