@@ -1,4 +1,4 @@
-import {Firegun} from './firegun';
+import { Firegun } from './index';
 const fg = new Firegun();
 
 (async ()=>{
