@@ -68,16 +68,24 @@ export default class Firegun {
                 peers : peers
             })    
         }
+
+        // Auto Login
+
+        let user = localStorage.getItem("fg.keypair");
+        try {
+            this.user = JSON.parse(user);            
+        } catch (error) {
+            this.user = {
+                alias : "",
+                pair : {
+                    priv : "",
+                    pub : "",
+                    epriv : "",
+                    epub : ""
+                }
+            };
+        }
         
-        this.user = {
-            alias : "",
-            pair : {
-                priv : "",
-                pub : "",
-                epriv : "",
-                epub : ""
-            }
-        };
         this.ev = {};
     }
     /**
@@ -189,6 +197,7 @@ export default class Firegun {
                         pair : s.sea,
                     }
                     resolve(this.user);
+                    localStorage.setItem("fg.keypair",JSON.stringify(this.user));
                 }
             }));
         });
@@ -251,7 +260,8 @@ export default class Firegun {
                         alias : username,
                         pair : s.sea,
                     }
-                    resolve(this.user);    
+                    resolve(this.user);
+                    localStorage.setItem("fg.keypair",JSON.stringify(this.user));
                 }
             })
         });
