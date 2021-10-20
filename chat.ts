@@ -1,4 +1,3 @@
-import Gun from 'gun'
 import Firegun from "./firegun";
 import { Pubkey, FiregunUser, Ack, common } from './common'
 
@@ -55,10 +54,9 @@ export default class Chat {
                 if (Object.hasOwnProperty.call(data, key)) {
                     if (pubkey.epub) {
                         if (data[key]._self) {
-                            data[key].msg = await Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
+                            data[key].msg = await this.firegun.Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
                         } else {
-                            // @ts-ignore
-                            data[key].msg = await Gun.SEA.decrypt(data[key].msg, await Gun.SEA.secret(pubkey.epub, this.firegun.user.pair));
+                            data[key].msg = await this.firegun.Gun.SEA.decrypt(data[key].msg, await (this.firegun.Gun as any).SEA.secret(pubkey.epub, this.firegun.user.pair));
                         }
                     }
                 }
@@ -80,7 +78,7 @@ export default class Chat {
      * @param msg 
      * @returns
      */
-    async send(pairkey: Pubkey,msg: string): Promise<string> {
+    async send(pairkey: Pubkey,msg: string,cert=""): Promise<string> {
         if (!this.firegun.user.alias) {
             return new Promise(async (resolve, reject) => {
                 reject("User Belum Login")
@@ -89,21 +87,18 @@ export default class Chat {
         return new Promise(async (resolve, reject) => {
             let msgToHim, msgToMe;
             if (pairkey.epub) {
-                // @ts-ignore
-                msgToHim = await Gun.SEA.encrypt(msg,await Gun.SEA.secret(pairkey.epub,this.firegun.user.pair));
-                msgToMe = await Gun.SEA.encrypt(msg,this.firegun.user.pair);
+                msgToHim = await this.firegun.Gun.SEA.encrypt(msg,await (this.firegun.Gun as any).SEA.secret(pairkey.epub,this.firegun.user.pair));
+                msgToMe = await this.firegun.Gun.SEA.encrypt(msg,this.firegun.user.pair);
             } else {
                 msgToHim = msg
             }
-            let cert = <string><unknown>await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
-            let currentdate = new Date(); 
-            let year = currentdate.getFullYear();
-            let month  = ((currentdate.getMonth()+1) < 10) ? "0" + (currentdate.getMonth()+1) : (currentdate.getMonth()+1);
-            let date = (currentdate.getDate() < 10) ? "0" + (currentdate.getDate()) : (currentdate.getDate());
-            let hour = (currentdate.getHours() < 10) ? "0" + (currentdate.getHours()) : (currentdate.getHours());
-            let minutes = (currentdate.getMinutes() < 10) ? "0" + (currentdate.getMinutes()) : (currentdate.getMinutes());
-            let seconds = (currentdate.getSeconds() < 10) ? "0" + (currentdate.getSeconds()) : (currentdate.getSeconds());
-            let datetime = `${year}/${month}/${date}@${hour}:${minutes}:${seconds}`;
+            if (cert === "") {
+                cert = (await this.firegun.Get(`~${pairkey.pub}/chat-cert`)).toString();
+            }
+
+            let datetime = common.getDate()
+
+            let timestamp = `${datetime.year}/${datetime.month}/${datetime.date}T${datetime.hour}:${datetime.minutes}:${datetime.seconds}.${datetime.miliseconds}`;
            
             let promises = [];
 
@@ -111,9 +106,9 @@ export default class Chat {
 
             // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
             promises.push(
-                await this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${year}/${(month)}/${date}`,{
+                await this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${datetime.year}/${datetime.month}/${datetime.date}`,{
                     "_self" : false,
-                    "timestamp" : datetime, 
+                    "timestamp" : timestamp, 
                     "msg" : msgToHim, 
                     "status" : "sent"
                 },true, undefined,{
@@ -124,9 +119,9 @@ export default class Chat {
             );
             // Put to My userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
             promises.push(
-                await this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${year}/${month}/${date}`,{
+                await this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${datetime.year}/${datetime.month}/${datetime.date}`,{
                     "_self" : true,
-                    "timestamp" : datetime, 
+                    "timestamp" : timestamp, 
                     "msg" : msgToMe, 
                     "status" : "sent"
                 })

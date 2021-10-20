@@ -1,4 +1,4 @@
-import {Firegun, Chat} from "./firegun"
+import {Firegun, Chat} from "./index"
 
 var fg = new Firegun(["https://fire-gun.herokuapp.com/gun"])
 var chat = new Chat(fg);

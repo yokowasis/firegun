@@ -1,10 +1,10 @@
 fireDB
 test.js
 test.mjs
-package-lock.json
 node_modules
 *.txt
 bundle.js
-firegun.js
+/*.js
+/*.map
 radata
 radata2

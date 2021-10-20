@@ -1,4 +1,4 @@
-import Gun from 'gun'
+const Gun = require("gun");
 
 import 'gun/sea';
 import 'gun/lib/radix';
@@ -9,6 +9,7 @@ import 'gun/lib/rindexed';
 import { FiregunUser, Ack, common } from './common'
 import { IGunChainReference } from "gun/types/chain";
 import { IGunCryptoKeyPair } from "gun/types/types";
+import { IGunStatic } from 'gun/types/static';
 
 function randomAlphaNumeric(length:number):string {
     var result           = '';
@@ -24,6 +25,7 @@ export default class Firegun {
 
     prefix : string;
     gun : IGunChainReference;
+    Gun : IGunStatic;
     user : FiregunUser;
     ev : {
         [key:string] : {
@@ -69,6 +71,8 @@ export default class Firegun {
             })    
         }
 
+        this.Gun = Gun;
+
         // Auto Login
 
         this.user = {
@@ -82,7 +86,8 @@ export default class Firegun {
         };
         let user = localStorage.getItem("fg.keypair");
         try {
-            this.user = JSON.parse(user);            
+            let autoLoginUser = JSON.parse(user);
+            this.loginPair(autoLoginUser.pair,autoLoginUser.alias);
         } catch (error) {
         }
         
@@ -155,7 +160,7 @@ export default class Firegun {
         if (typeof data === "object") {
             data = JSON.stringify(data);
         }
-        let hash = await Gun.SEA.work(data, null, undefined, {name: "SHA-256"});
+        let hash = await this.Gun.SEA.work(data, null, undefined, {name: "SHA-256"});
         return new Promise((resolve) => {
             if (hash)
             this.gun.get(`${key}`).get(hash).put(<any>data,(s)=>{
@@ -170,7 +175,7 @@ export default class Firegun {
      */
     async generatePair (): Promise<IGunCryptoKeyPair | undefined> {
         return new Promise(async function (resolve) {
-            resolve (await Gun.SEA.pair());
+            resolve (await this.Gun.SEA.pair());
         });        
     }
 
@@ -414,7 +419,7 @@ export default class Firegun {
      */
     async Put (path: string,data: (string | {[key:string] : {} | string}),async = false, prefix: string=this.prefix,opt:undefined | { opt : { cert : string} }=undefined): Promise<{data : Ack[],error : Ack[]}> {
         path = `${prefix}${path}`;
-        if (async) { console.log(path) }
+        // if (async) { console.log(path) }
         let paths = path.split("/");
         let dataGun = this.gun;
 
