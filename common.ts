@@ -1,4 +1,4 @@
-const Gun = require("gun");
+import Gun from "gun";
 import Firegun from "./firegun";
 
 export declare type FiregunUser = {

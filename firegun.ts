@@ -1,4 +1,4 @@
-const Gun = require("gun");
+import Gun from 'gun';
 
 import 'gun/sea';
 import 'gun/lib/radix';
