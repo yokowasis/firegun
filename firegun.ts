@@ -87,7 +87,16 @@ export default class Firegun {
         let user = localStorage.getItem("fg.keypair");
         try {
             let autoLoginUser = JSON.parse(user);
-            this.loginPair(autoLoginUser.pair,autoLoginUser.alias);
+            this.loginPair(autoLoginUser.pair,autoLoginUser.alias)
+            .then(async ()=>{
+                console.log ("Checking Certificate...")
+                try {
+                    let cert = await this.userGet("chat-cert");
+                    console.log ("Checking Certificate...✔")
+                } catch (error) {
+                    common.generatePublicCert(this);
+                }                
+            })
         } catch (error) {
         }
         
