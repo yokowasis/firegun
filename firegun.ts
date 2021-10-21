@@ -341,7 +341,7 @@ export default class Firegun {
      * @param {string} prefix Database Prefix
      * @returns
      */
-    async Get (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<undefined | string |  {[key:string] : {}}> {
+    async Get (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<undefined | string |  {[key:string] : {}} | {[key:string] : string}> {
         let path0 = path;
         path = `${prefix}${path}`;
         let paths = path.split("/");
