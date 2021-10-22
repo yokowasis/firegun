@@ -92,9 +92,15 @@ export default class Chat {
             } else {
                 msgToHim = msg
             }
+            msgToMe = msgToMe || ""
+            
             if (cert === "") {
-                cert = (await this.firegun.Get(`~${pairkey.pub}/chat-cert`)).toString();
+                let tempCert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
+                if (typeof tempCert === "string") {
+                    cert = tempCert;
+                }
             }
+
 
             let datetime = common.getDate()
 

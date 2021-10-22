@@ -85,6 +85,8 @@ export default class Firegun {
             }
         };
         let user = localStorage.getItem("fg.keypair");
+        user = user || ""
+        if (user)
         try {
             let autoLoginUser = JSON.parse(user);
             this.loginPair(autoLoginUser.pair,autoLoginUser.alias)
@@ -183,7 +185,7 @@ export default class Firegun {
      * @returns
      */
     async generatePair (): Promise<IGunCryptoKeyPair | undefined> {
-        return new Promise(async function (resolve) {
+        return new Promise(async (resolve) => {
             resolve (await this.Gun.SEA.pair());
         });        
     }
@@ -405,7 +407,7 @@ export default class Firegun {
      * @param opt 
      * @returns 
      */
-    async Set (path: string,data: {[key : string] : {}} ,async=false, prefix=this.prefix,opt : undefined | { opt: { cert: string; }; }=undefined) : Promise<{data : Ack[],error : Ack[]}> {
+    async Set (path: string,data: {[key : string] : {}} | {[key : string] : string} ,async=false, prefix=this.prefix,opt : undefined | { opt: { cert: string; }; }=undefined) : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
             var token = randomAlphaNumeric(30);
             data.id = token;
@@ -441,7 +443,8 @@ export default class Firegun {
         }
         let promises : Promise<Ack>[] = [];
         if (typeof data === "object")
-        var obj:{data : Ack[],error : Ack[]} = { data: [] , error : []};
+        var obj : {data : Ack[],error : Ack[]} 
+            obj = { data: [] , error : []};
         if (typeof data == "object")
         for (const key in data) {
             if (Object.hasOwnProperty.call(data, key)) {
@@ -543,7 +546,7 @@ export default class Firegun {
                                     let s = await <any>this.Load(`${path}/${key}`,async);
                                     obj.data[key] = s;
                                 } catch (error) {
-                                    obj.err.push(error)
+                                    (obj.err as any).push(error)
                                 }
                             } else {
                                 promises.push(this.Load(`${path}/${key}`,async).then(s=>{
