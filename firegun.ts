@@ -227,14 +227,14 @@ export default class Firegun {
      * @param password 
      * @returns
      */
-    async userNew (username: string, password: string): Promise<{ err: string } | FiregunUser > {
+    async userNew (username: string, password: string,alias:string = undefined): Promise<{ err: string } | FiregunUser > {
         return new Promise((resolve,reject)=>{
             this.gun.user().create(username,password,async (s)=>{
                 if ("err" in s) {
                     reject(s);
                 } else {
                     this.gun.user().leave();
-                    let user = await this.userLogin(username,password);
+                    let user = await this.userLogin(username,password,alias);
                     if ("err" in user) {
                         reject (user);
                     } else {
