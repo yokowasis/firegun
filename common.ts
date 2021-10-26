@@ -31,6 +31,7 @@ export declare type chatType = {
     _self : boolean, 
     msg : string, 
     timestamp: string,
+    id : string,
 }
 
 const zeroPad = (num:number, places:number) => String(num).padStart(places, '0')

@@ -434,7 +434,7 @@ export default class Firegun {
      * @param opt option (certificate)
      * @returns 
      */
-    async Put (path: string,data: (string | {[key:string] : {} | string}),async = false, prefix: string=this.prefix,opt:undefined | { opt : { cert : string} }=undefined): Promise<{data : Ack[],error : Ack[]}> {
+    async Put (path: string,data: (null | string | {[key:string] : {} | string}),async = false, prefix: string=this.prefix,opt:undefined | { opt : { cert : string} }=undefined): Promise<{data : Ack[],error : Ack[]}> {
         path = `${prefix}${path}`;
         // if (async) { console.log(path) }
         let paths = path.split("/");
@@ -508,6 +508,19 @@ export default class Firegun {
         });
     }
 
+    async userDel (path : string) : Promise<{data : Ack[],error : Ack[]}> {
+        return new Promise(async (resolve, reject) => {
+            path = `~${this.user.pair.pub}/${path}`
+            this.Del(path)
+            .then(res=>{
+                resolve(res)
+            })
+            .catch(err=>{
+                reject(err)
+            })
+        });
+    }
+
     /**
      * Delete node Path. It's not really deleted. It's just detached (tombstone). Data without parent.
      * @param path 
@@ -515,11 +528,8 @@ export default class Firegun {
      */
     async Del (path : string) : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
-            var token = randomAlphaNumeric(30);            
-            this.Put(`${path}`,{
-                "#" : token,
-                "t" : "_"
-            })
+            // var token = randomAlphaNumeric(30);            
+            this.Put(`${path}`,null)
             .then(s=>{
                 resolve(s);
             })
