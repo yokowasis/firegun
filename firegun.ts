@@ -84,22 +84,24 @@ export default class Firegun {
                 epub : ""
             }
         };
-        let user = localStorage.getItem("fg.keypair");
-        user = user || ""
-        if (user)
-        try {
-            let autoLoginUser = JSON.parse(user);
-            this.loginPair(autoLoginUser.pair,autoLoginUser.alias)
-            .then(async ()=>{
-                console.log ("Checking Certificate...")
-                try {
-                    await this.userGet("chat-cert");
-                    console.log ("Checking Certificate...✔")
-                } catch (error) {
-                    common.generatePublicCert(this);
-                }                
-            })
-        } catch (error) {
+        if (localstorage) {
+            let user = localStorage.getItem("fg.keypair");
+            user = user || ""
+            if (user)
+            try {
+                let autoLoginUser = JSON.parse(user);
+                this.loginPair(autoLoginUser.pair,autoLoginUser.alias)
+                .then(async ()=>{
+                    console.log ("Checking Certificate...")
+                    try {
+                        await this.userGet("chat-cert");
+                        console.log ("Checking Certificate...✔")
+                    } catch (error) {
+                        common.generatePublicCert(this);
+                    }                
+                })
+            } catch (error) {
+            }            
         }
         
         this.ev = {};
@@ -281,7 +283,9 @@ export default class Firegun {
                         pair : s.sea,
                     }
                     resolve(this.user);
-                    localStorage.setItem("fg.keypair",JSON.stringify(this.user));
+                    if (typeof localStorage !== "undefined") {
+                        localStorage.setItem("fg.keypair",JSON.stringify(this.user));
+                    }                        
                 }
             })
         });
@@ -528,14 +532,42 @@ export default class Firegun {
      */
     async Del (path : string) : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
-            // var token = randomAlphaNumeric(30);            
-            this.Put(`${path}`,null)
-            .then(s=>{
-                resolve(s);
-            })
-            .catch(err=>{
-                reject(err)
-            })
+            var token = randomAlphaNumeric(30);
+            try {
+
+                let randomNode = this.gun.get(token).get(token).put({
+                    "t" : "_"
+                });
+
+                let paths = path.split("/");
+                let dataGun = this.gun;
+                
+                paths.forEach(path => {
+                    dataGun = dataGun.get(path);
+                });
+
+                dataGun.put(randomNode,(s)=>{
+                    if (s.err === undefined) {
+                        resolve({
+                            data : [{
+                                "ok" : "ok",
+                                "err" : undefined
+                            }],
+                            error : []                        
+                        })        
+                    } else {
+                        reject({
+                            data : [{
+                                "ok" : "",
+                                "err" : s.err
+                            }],
+                            error : []                        
+                        })        
+                    }
+                })        
+            } catch (error) {
+                reject(error);
+            }
         })        
     }
 
