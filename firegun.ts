@@ -230,7 +230,7 @@ export default class Firegun {
      * @param password 
      * @returns
      */
-    async userNew (username: string, password: string,alias:string = undefined): Promise<{ err: string } | FiregunUser > {
+    async userNew (username: string, password: string,alias:string = ""): Promise<{ err: string } | FiregunUser > {
         return new Promise((resolve,reject)=>{
             this.gun.user().create(username,password,async (s)=>{
                 if ("err" in s) {
@@ -258,7 +258,7 @@ export default class Firegun {
      * @param repeat time to repeat the login before give up. Because the nature of decentralization, just because the first time login is failed, doesn't mean the user / password pair doesn't exist in the network
      * @returns 
      */
-    async userLogin (username: string, password: string, alias:string = undefined, repeat: number=2): Promise<{err : string} | FiregunUser> {
+    async userLogin (username: string, password: string, alias:string = "", repeat: number=2): Promise<{err : string} | FiregunUser> {
         return new Promise((resolve,reject)=>{
             this.gun.user().auth(username,password,async (s)=>{
                 if ("err" in  s) {
