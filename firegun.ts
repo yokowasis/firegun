@@ -93,7 +93,7 @@ export default class Firegun {
             .then(async ()=>{
                 console.log ("Checking Certificate...")
                 try {
-                    let cert = await this.userGet("chat-cert");
+                    await this.userGet("chat-cert");
                     console.log ("Checking Certificate...✔")
                 } catch (error) {
                     common.generatePublicCert(this);
@@ -145,7 +145,10 @@ export default class Firegun {
             dataGun = dataGun.get(path);
         });
 
-        let listenerHandler = (value : any, key : any , _msg : any, _ev : any) => {
+        let listenerHandler = (value : any, key : any , _msg : any, _ev : any) => {            
+             if (false) {
+                 console.log(key)
+             }
              this.ev[ev] = {
                 handler : _ev
             }
@@ -328,7 +331,7 @@ export default class Firegun {
     async userLoad (path: string,async=false, repeat: number = 1,prefix: string=this.prefix): Promise<{[key : string] : any} | undefined> {
         if (this.user.alias) {
            path = `~${this.user.pair.pub}/${path}`
-           return (await this.Load(path,async=false, repeat,prefix));
+           return (await this.Load(path,async, repeat,prefix));
         } else {
             return undefined;
         }
@@ -415,6 +418,9 @@ export default class Firegun {
             .then(s=>{
                 resolve(s);
             })
+            .catch(err=>{
+                reject(err);
+            })
         })
     }
 
@@ -470,7 +476,7 @@ export default class Firegun {
         
         return new Promise((resolve,reject)=>{
            Promise.allSettled(promises)
-            .then(s=>{
+            .then(()=>{
                 // Handle Empty Object
                 if (data && Object.keys(data).length === 0) {
                     resolve (obj)
@@ -496,6 +502,9 @@ export default class Firegun {
                 obj.error.push({ err : Error(JSON.stringify(s)), ok : path});
                 resolve(obj)
             })
+            .catch((err)=>{
+                reject(err);
+            })
         });
     }
 
@@ -513,6 +522,9 @@ export default class Firegun {
             })
             .then(s=>{
                 resolve(s);
+            })
+            .catch(err=>{
+                reject(err)
             })
         })        
     }
@@ -563,7 +575,7 @@ export default class Firegun {
                     }
                 }
                 Promise.allSettled(promises)
-                .then(s=>{
+                .then(()=>{
                     resolve(obj);
                 })
                 .catch(s=>{
@@ -574,6 +586,9 @@ export default class Firegun {
             .catch(s=>{
                 obj.err.push(s)
                 resolve(obj);
+            })
+            .catch(err=>{
+                reject(err);
             })
         });
     }

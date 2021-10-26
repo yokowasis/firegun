@@ -41,33 +41,31 @@ export default class Chat {
      * @returns
      */
     async retrieve(pubkey: Pubkey, date : string[] = []) {
-        if (!this.firegun.user.alias) {
-            return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
+            if (!this.firegun.user.alias) {
                 reject("User Belum Login")
-            });
-        } else {
-            console.log ("RETRIEVING ...");
-            let data : {[key:string] : any} | undefined = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
-            let sortedData : {}[] = [];
-            console.log ("DONE !!");
-            for (const key in data) {
-                if (Object.hasOwnProperty.call(data, key)) {
-                    if (pubkey.epub) {
-                        if (data[key]._self) {
-                            data[key].msg = await this.firegun.Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
-                        } else {
-                            data[key].msg = await this.firegun.Gun.SEA.decrypt(data[key].msg, await (this.firegun.Gun as any).SEA.secret(pubkey.epub, this.firegun.user.pair));
+            } else {
+                console.log ("RETRIEVING ...");
+                let data : {[key:string] : any} | undefined = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
+                let sortedData : {}[] = [];
+                console.log ("DONE !!");
+                for (const key in data) {
+                    if (Object.hasOwnProperty.call(data, key)) {
+                        if (pubkey.epub) {
+                            if (data[key]._self) {
+                                data[key].msg = await this.firegun.Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
+                            } else {
+                                data[key].msg = await this.firegun.Gun.SEA.decrypt(data[key].msg, await (this.firegun.Gun as any).SEA.secret(pubkey.epub, this.firegun.user.pair));
+                            }
                         }
                     }
+                    sortedData.push(data[key]);
                 }
-                sortedData.push(data[key]);
-            }
-            sortedData.sort(common.dynamicSort("timestamp"));
-            return new Promise(async (resolve, reject) => {
+                sortedData.sort(common.dynamicSort("timestamp"));
                 resolve(sortedData);
-            });
-            
-        }
+            }            
+        });
+
     }
 
     /**
@@ -79,67 +77,62 @@ export default class Chat {
      * @returns
      */
     async send(pairkey: Pubkey,msg: string,cert=""): Promise<string> {
-        if (!this.firegun.user.alias) {
-            return new Promise(async (resolve, reject) => {
-                reject("User Belum Login")
-            });
-        } else
         return new Promise(async (resolve, reject) => {
-            let msgToHim, msgToMe;
-            if (pairkey.epub) {
-                msgToHim = await this.firegun.Gun.SEA.encrypt(msg,await (this.firegun.Gun as any).SEA.secret(pairkey.epub,this.firegun.user.pair));
-                msgToMe = await this.firegun.Gun.SEA.encrypt(msg,this.firegun.user.pair);
+            if (!this.firegun.user.alias) {
+                reject("User Belum Login")
             } else {
-                msgToHim = msg
-            }
-            msgToMe = msgToMe || ""
-            
-            if (cert === "") {
-                let tempCert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
-                if (typeof tempCert === "string") {
-                    cert = tempCert;
+                let msgToHim, msgToMe;
+                if (pairkey.epub) {
+                    msgToHim = await this.firegun.Gun.SEA.encrypt(msg,await (this.firegun.Gun as any).SEA.secret(pairkey.epub,this.firegun.user.pair));
+                    msgToMe = await this.firegun.Gun.SEA.encrypt(msg,this.firegun.user.pair);
+                } else {
+                    msgToHim = msg
                 }
-            }
-
-
-            let datetime = common.getDate()
-
-            let timestamp = `${datetime.year}/${datetime.month}/${datetime.date}T${datetime.hour}:${datetime.minutes}:${datetime.seconds}.${datetime.miliseconds}`;
-           
-            let promises = [];
-
-            // Harus await, entah kenapa. Kalau tidak await tidak bisa.
-
-            // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
-            promises.push(
-                await this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${datetime.year}/${datetime.month}/${datetime.date}`,{
-                    "_self" : false,
-                    "timestamp" : timestamp, 
-                    "msg" : msgToHim, 
-                    "status" : "sent"
-                },true, undefined,{
-                    opt : {
-                        cert : cert
+                msgToMe = msgToMe || ""
+                
+                if (cert === "") {
+                    let tempCert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
+                    if (typeof tempCert === "string") {
+                        cert = tempCert;
                     }
+                }
+                let datetime = common.getDate()    
+                let timestamp = `${datetime.year}/${datetime.month}/${datetime.date}T${datetime.hour}:${datetime.minutes}:${datetime.seconds}.${datetime.miliseconds}`;               
+                let promises = [];
+    
+                // Harus await, entah kenapa. Kalau tidak await tidak bisa.
+    
+                // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
+                promises.push(
+                    await this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${datetime.year}/${datetime.month}/${datetime.date}`,{
+                        "_self" : false,
+                        "timestamp" : timestamp, 
+                        "msg" : msgToHim, 
+                        "status" : "sent"
+                    },true, undefined,{
+                        opt : {
+                            cert : cert
+                        }
+                    })
+                );
+                // Put to My userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
+                promises.push(
+                    await this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${datetime.year}/${datetime.month}/${datetime.date}`,{
+                        "_self" : true,
+                        "timestamp" : timestamp, 
+                        "msg" : msgToMe, 
+                        "status" : "sent"
+                    })
+                )
+                
+                Promise.all(promises)
+                .then(()=>{
+                    resolve("OK");
                 })
-            );
-            // Put to My userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
-            promises.push(
-                await this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${datetime.year}/${datetime.month}/${datetime.date}`,{
-                    "_self" : true,
-                    "timestamp" : timestamp, 
-                    "msg" : msgToMe, 
-                    "status" : "sent"
-                })
-            )
-            
-            Promise.all(promises)
-            .then(s=>{
-                resolve("OK");
-            })
-            .catch(err=>{
-                reject(err);
-            })
+                .catch(err=>{
+                    reject(err);
+                })                
+            }
         });
     }
 
@@ -197,7 +190,7 @@ export default class Chat {
                 promises.push(this.firegun.userPut(`chat-group/${groupname}/info/name`,groupname))
                 promises.push(this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify([])));
                 Promise.allSettled(promises)
-                .then(s=>{
+                .then(()=>{
                     resolve("OK");
                 })
                 .catch(s=>{
