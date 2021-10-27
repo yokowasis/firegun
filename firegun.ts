@@ -512,10 +512,10 @@ export default class Firegun {
         });
     }
 
-    async userDel (path : string) : Promise<{data : Ack[],error : Ack[]}> {
+    async userDel (path : string, putNull:boolean=true) : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
             path = `~${this.user.pair.pub}/${path}`
-            this.Del(path)
+            this.Del(path,putNull)
             .then(res=>{
                 resolve(res)
             })
@@ -530,17 +530,26 @@ export default class Firegun {
      * @param path 
      * @returns 
      */
-    async Del (path : string) : Promise<{data : Ack[],error : Ack[]}> {
+    async Del (path : string, putNull:boolean=true) : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
-            var token = randomAlphaNumeric(30);
+            // var token = randomAlphaNumeric(50);
             try {
 
-                let randomNode = this.gun.get(token).get(token).put({
-                    "t" : "_"
-                });
+                let randomNode:any;
 
                 let paths = path.split("/");
                 let dataGun = this.gun;
+
+                // Check if path is user
+                if (putNull) {
+                    randomNode = null
+                } else {
+                    if (paths[0].indexOf("~")>=0) {
+                        randomNode = this.gun.user().get('newNode').set({"t" : "_"});
+                    } else {
+                        randomNode = this.gun.get('newNode').set({"t" : "_"});
+                    }    
+                }
                 
                 paths.forEach(path => {
                     dataGun = dataGun.get(path);

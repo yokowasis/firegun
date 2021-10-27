@@ -37,9 +37,9 @@ const fg = new Firegun();
     //     console.log (s);
     // })
 
-    fg.gun.get("random/Node/v/insider").once(s=>{
-        console.log (s);
-    })
+    // fg.gun.get("random/Node/v/insider").once(s=>{
+    //     console.log (s);
+    // })
 
     // fg.gun.get("some/test/t").once(s=>{
     //     console.log (s);
@@ -65,6 +65,13 @@ const fg = new Firegun();
     //     console.log(err)
     // })    
 
+    // await fg.Del("user/marknadal");
+    try {
+        console.log (await fg.Get("user/marknadal"));        
+    } catch (error) {
+        console.log (error);
+    }
+    
 
     console.log ("AAAA");
 })()
