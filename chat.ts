@@ -83,6 +83,7 @@ export default class Chat {
                 try {
                     await this.firegun.Del(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${date}/${chatID}`,true,cert)
                     await this.firegun.userDel(`chat-with/${pairkey.pub}/${date}/${chatID}`)
+                    await this.firegun.Put(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${date}/unsendChat`,chatID,true,"",{opt : { cert : cert }})
                     resolve("OK");                    
                 } catch (error) {
                     reject (error);                
