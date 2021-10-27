@@ -84,7 +84,7 @@ export default class Firegun {
                 epub : ""
             }
         };
-        if (localstorage) {
+        if (localStorage) {
             let user = localStorage.getItem("fg.keypair");
             user = user || ""
             if (user)
