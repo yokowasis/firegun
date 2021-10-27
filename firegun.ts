@@ -530,7 +530,7 @@ export default class Firegun {
      * @param path 
      * @returns 
      */
-    async Del (path : string, putNull:boolean=true) : Promise<{data : Ack[],error : Ack[]}> {
+    async Del (path : string, putNull:boolean=true,cert:string="") : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
             // var token = randomAlphaNumeric(50);
             try {
@@ -555,25 +555,51 @@ export default class Firegun {
                     dataGun = dataGun.get(path);
                 });
 
-                dataGun.put(randomNode,(s)=>{
-                    if (s.err === undefined) {
-                        resolve({
-                            data : [{
-                                "ok" : "ok",
-                                "err" : undefined
-                            }],
-                            error : []                        
-                        })        
-                    } else {
-                        reject({
-                            data : [{
-                                "ok" : "",
-                                "err" : s.err
-                            }],
-                            error : []                        
-                        })        
-                    }
-                })        
+                if (cert) {
+                    dataGun.put(randomNode,(s)=>{
+                        if (s.err === undefined) {
+                            resolve({
+                                data : [{
+                                    "ok" : "ok",
+                                    "err" : undefined
+                                }],
+                                error : []                        
+                            })        
+                        } else {
+                            reject({
+                                data : [{
+                                    "ok" : "",
+                                    "err" : s.err
+                                }],
+                                error : []                        
+                            })        
+                        }
+                    },{
+                        opt : {
+                            cert : cert
+                        }
+                    })                    
+                } else {
+                    dataGun.put(randomNode,(s)=>{
+                        if (s.err === undefined) {
+                            resolve({
+                                data : [{
+                                    "ok" : "ok",
+                                    "err" : undefined
+                                }],
+                                error : []                        
+                            })        
+                        } else {
+                            reject({
+                                data : [{
+                                    "ok" : "",
+                                    "err" : s.err
+                                }],
+                                error : []                        
+                            })        
+                        }
+                    })                    
+                }
             } catch (error) {
                 reject(error);
             }

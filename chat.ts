@@ -68,6 +68,29 @@ export default class Chat {
 
     }
 
+    async unsend(pairkey: Pubkey,date:string,chatID: string,cert=""): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            if (!this.firegun.user.alias) {
+                reject("User Belum Login")
+            } else {
+                if (cert === "") {
+                    let tempCert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
+                    if (typeof tempCert === "string") {
+                        cert = tempCert;
+                    }
+                }
+                
+                try {
+                    await this.firegun.Del(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${date}/${chatID}`,true,cert)
+                    await this.firegun.userDel(`chat-with/${pairkey.pub}/${date}/${chatID}`)
+                    resolve("OK");                    
+                } catch (error) {
+                    reject (error);                
+                }
+            }
+        });        
+    }
+
     /**
      * 
      * Send Chat Message
@@ -104,7 +127,8 @@ export default class Chat {
     
                 // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
                 promises.push(
-                    await this.firegun.Set(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${datetime.year}/${datetime.month}/${datetime.date}`,{
+                    await this.firegun.Put(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${datetime.year}/${datetime.month}/${datetime.date}/${timestamp.replace(/\//g, '.')}`,{
+                        "id" : timestamp.replace(/\//g, '.'),
                         "_self" : false,
                         "timestamp" : timestamp, 
                         "msg" : msgToHim, 
@@ -117,7 +141,8 @@ export default class Chat {
                 );
                 // Put to My userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
                 promises.push(
-                    await this.firegun.Set(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${datetime.year}/${datetime.month}/${datetime.date}`,{
+                    await this.firegun.Put(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${datetime.year}/${datetime.month}/${datetime.date}/${timestamp.replace(/\//g, '.')}`,{
+                        "id" : timestamp.replace(/\//g, '.'),
                         "_self" : true,
                         "timestamp" : timestamp, 
                         "msg" : msgToMe, 
