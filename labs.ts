@@ -7,7 +7,7 @@ new Firegun([
 (async ()=>{
     fg.Put
     ('test/paste',
-    "Coba dari local 4x")
+    "Coba dari local 5x")
 })()
 
 
