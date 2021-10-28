@@ -512,6 +512,42 @@ export default class Firegun {
         });
     }
 
+    async purge(path:string) {
+        return new Promise(async (resolve,reject)=>{
+            let data = await this.Get(path);
+            let newData = JSON.parse(JSON.stringify(data));
+            if (typeof newData === "object"){
+                for (const key in newData) {
+                    if (
+                        key != "_" &&
+                        key != ">" &&
+                        key != "#" &&
+                        key != ":"  
+                    )
+                    newData[key] = null;
+                }
+            }
+            this.Put(path,newData)
+            .then(()=>{
+                resolve("OK")
+            })
+            .catch(err=>{
+                console.log(err);
+                reject(JSON.stringify(err));
+            })
+        })
+    }
+
+    /**
+     * Delete form user node
+     * 
+     * 
+     * @param path path to delete
+     * @param putNull 
+     *  - true (if you want to put null value)
+     *  - false (if you want to delete the node with it's child)
+     * @returns 
+     */
     async userDel (path : string, putNull:boolean=true) : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
             path = `~${this.user.pair.pub}/${path}`
@@ -527,8 +563,10 @@ export default class Firegun {
 
     /**
      * Delete node Path. It's not really deleted. It's just detached (tombstone). Data without parent.
-     * @param path 
-     * @returns 
+     * @param path path to delete
+     * @param putNull 
+     *  - true (if you want to put null value)
+     *  - false (if you want to delete the node with it's child)
      */
     async Del (path : string, putNull:boolean=true,cert:string="") : Promise<{data : Ack[],error : Ack[]}> {
         return new Promise(async (resolve, reject) => {
