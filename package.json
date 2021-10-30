@@ -1,6 +1,6 @@
 {
     "name": "@yokowasis/firegun",
-    "version": "1.4.19",
+    "version": "1.4.20",
     "description": "gunDB Wrapper for easy access and use.",
     "license": "MIT",
     "repository": "yokowasis/firegun",
