@@ -9,3 +9,7 @@
 ⬜ Perbaiki fungsi `Del()` dan `userDel()` gunakan folder `orphanNode` dan `~orphanNode~`
 ⬜ Buat fungsi `Purge()` dan `userPurge()` me`null`kan node tersebut dan child nya. 
    Jangan buat recursive, karena gun bisa menggunakan circular reference. Akan menjadi infinite loop.
+
+[] Filter Map Menggunakan Date Time Sekarang . Sehingga Yang Di subscribe Hanya Entry baru saja. 
+
+
