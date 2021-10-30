@@ -84,6 +84,32 @@ export const common = {
         }
     },
 
+    fileTobase64 : async (fileElement:HTMLInputElement) => {
+        return new Promise((resolve) => {
+            if (fileElement.files !== null) {
+                let file = fileElement.files[0];
+                var reader = new FileReader();
+                reader.readAsDataURL(file);
+                let fileInfo = {
+                    name : file.name,
+                    size : file.size,
+                    type : file.type,                
+                }
+                reader.onload = function () {
+                    let data = {
+                        info : fileInfo,
+                        content : reader.result,
+                    }
+                    resolve((data));
+                };
+                reader.onerror = function (error) {
+                    console.log('Error: ', error);
+                };                 
+            }
+            
+        })
+    },
+
     /**
      * Generate Current date and time object
      * @returns 
