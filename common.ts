@@ -84,7 +84,7 @@ export const common = {
         }
     },
 
-    fileTobase64 : async (fileElement:HTMLInputElement) => {
+    fileTobase64 : async (fileElement:HTMLInputElement):Promise<{info:{name:string,size:number,type:string},content:string | ArrayBuffer | null}> => {
         return new Promise((resolve) => {
             if (fileElement.files !== null) {
                 let file = fileElement.files[0];
