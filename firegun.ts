@@ -316,7 +316,11 @@ export default class Firegun {
      * @param prefix Database Prefix
      * @returns
      */
-    async userGet (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<{} | undefined> {
+    async userGet (path: string,repeat: number = 1,prefix: string=this.prefix): Promise<string | {
+        [key: string]: {};
+    } | {
+        [key: string]: string;
+    } | undefined> {
         if (this.user.alias) {
            path = `~${this.user.pair.pub}/${path}`
            return (await this.Get(path,repeat,prefix));
@@ -652,7 +656,6 @@ export default class Firegun {
      * @returns 
      */
     async Load (path: string,async=false,repeat: number = 1,prefix: string=this.prefix) : Promise<{data : {[s:string] : {}}, err : {path : string, err : string}[]}> {
-        console.log(path);
         return new Promise((resolve, reject) => {
             let promises :Promise<any>[] = []
             let obj : {data : {[s:string] : {}}, err : {path : string, err : string}[]} = { data : {}, err : []};

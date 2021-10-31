@@ -1,5 +1,5 @@
+import { Ack, common, FiregunUser, Pubkey } from './common';
 import Firegun from "./firegun";
-import { Pubkey, FiregunUser, Ack, common } from './common'
 
 export default class Chat {
 
@@ -171,27 +171,18 @@ export default class Chat {
      * @param msg 
      * @returns 
      */
-    async groupSend(groupowner: Pubkey,groupname: string,msg: string) : Promise<{data : Ack[],error : Ack[]}> {
+    async groupSend(groupowner: string,groupname: string,msg: string) : Promise<{data : Ack[],error : Ack[]}> {
+        console.log(groupowner);
         return new Promise(async (resolve, reject) => {
-            let cert = <string><unknown>await this.firegun.Get(`~${groupowner.pub}/chat-group/${groupname}/cert`);
-            let currentdate = new Date(); 
-            let datetime =  currentdate.getDate() + "/"
-                            + (currentdate.getMonth()+1)  + "/" 
-                            + currentdate.getFullYear() + " @ "  
-                            + currentdate.getHours() + ":"  
-                            + currentdate.getMinutes() + ":" 
-                            + currentdate.getSeconds();
-           
-            // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
-            this.firegun.Set(`~${groupowner.pub}/chat-group/${groupname}/chat/${currentdate.getFullYear()}/${(currentdate.getMonth()+1)}/${currentdate.getDate()}/${this.firegun.user.pair.pub}`,{
-                "_self" : false,
-                "timestamp" : datetime, 
+            let datetime = common.getDate()    
+            let timestamp = `${datetime.year}/${datetime.month}/${datetime.date}T${datetime.hour}:${datetime.minutes}:${datetime.seconds}.${datetime.miliseconds}`;               
+            
+            await this.firegun.userPut(`chat-group-with/${groupowner}&${groupname}/${datetime.year}/${datetime.month}/${datetime.date}/${timestamp.replace(/\//g, '.')}`,{
+                "id" : timestamp.replace(/\//g, '.'),
+                "_self" : true,
+                "timestamp" : timestamp, 
                 "msg" : msg, 
                 status : "sent"
-            },true, undefined,{
-                opt : {
-                    cert : cert
-                }
             })
             .then(s=>{
                 resolve(s)
@@ -208,13 +199,19 @@ export default class Chat {
      * 
      * @param groupname 
      */
-     async groupNew(groupname: string) : Promise<string> {
+     async groupNew(groupname: string, groupDesc:string, groupImage:string) : Promise<string> {
         // /userspace/chat-group/groupname/cert
         if (this.firegun.user.alias) {
             return new Promise(async (resolve, reject) => {
                 let promises:any[] = [];
                 promises.push(this.firegun.userPut(`chat-group/${groupname}/info/name`,groupname))
-                promises.push(this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify([])));
+                promises.push(this.firegun.userPut(`chat-group/${groupname}/info/desc`,groupDesc))
+                promises.push(this.firegun.userPut(`chat-group/${groupname}/info/image`,groupImage))
+                promises.push(this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify([{
+                    "alias" : this.firegun.user.alias,
+                    "pub" : this.firegun.user.pair.pub
+                }])));
+                promises.push(this.firegun.userPut(`chat-group-with/${this.firegun.user.pair.pub}&${groupname}`,{"t" : "_"}));
                 Promise.allSettled(promises)
                 .then(()=>{
                     resolve("OK");
@@ -236,24 +233,29 @@ export default class Chat {
      * @param groupname
      */
     async groupUpdateCert(groupname : string) : Promise<{data : Ack[],error : Ack[]}> {
-        // BUG Blacklis Work Around
-        // await this.firegun.userPut(`chat-group/${groupname}/banlist`,{
-        //     "t" : "_"
-        // })
-        
-        let members = JSON.parse(<string>await this.firegun.userGet(`chat-group/${groupname}/members`));
-        // @ts-ignore
-        let cert = await Gun.SEA.certify(members, [{ "*" : `chat-group/${groupname}/chat`,"+" : "*"}], this.firegun.user.pair,null,{
-            // block : `chat-group/${groupname}/banlist` //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
-        });
+
         return new Promise(async (resolve, reject) => {
-            this.firegun.userPut(`chat-group/${groupname}/cert`,cert)
-            .then(s=>{
-                resolve(s);
-            })
-            .catch(err=>{
-                reject(err);    
-            })    
+            // BUG Blacklis Work Around
+            // await this.firegun.userPut(`chat-group/${groupname}/banlist`,{
+            //     "t" : "_"
+            // })
+            let members:string[];
+            let s = await this.firegun.userGet(`chat-group/${groupname}/members`);
+            if (typeof s === "string") {
+                members = JSON.parse(s);
+                let cert = await (this.firegun.Gun as any).SEA.certify(members, [{ "*" : `chat-group/${groupname}/chat`,"+" : "*"}], this.firegun.user.pair,null,{
+                    // block : `chat-group/${groupname}/banlist` //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
+                });    
+                this.firegun.userPut(`chat-group/${groupname}/cert`,cert)
+                .then(s=>{
+                    resolve(s);
+                })
+                .catch(err=>{
+                    reject(err);    
+                })        
+            } else {
+                reject("Members node not found");
+            }
         });
     }
 
@@ -264,11 +266,19 @@ export default class Chat {
      * @param groupname
      * @param pairkey 
      */
-    async groupInvite(groupname: string, pairkey: Pubkey) {
-        let members = JSON.parse(<string>await this.firegun.userGet(`chat-group/${groupname}/members`));
-        members.push(pairkey.pub);
-        let res = await this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify(members))
-        return (res);
+    async groupInvite(groupname: string, pubkey: string, alias : string) {
+        let data = await this.firegun.userGet(`chat-group/${groupname}/members`);
+        if (typeof data === "string") {
+            let members = JSON.parse(data);
+            members.push({
+                "alias" : alias,
+                "pub" : pubkey,
+            })            
+            let res = await this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify(members));
+            return (res);
+        } else {
+            return {}
+        }
     }
 
     /**
