@@ -308,8 +308,18 @@ export default class Chat {
         return (data)        
     }
 
-    async groupBan() {
+    async groupBan(groupname:string, pubkey:string) {
+        let data = await this.firegun.userGet(`chat-group/${groupname}/members`);
+        if (typeof data === "string") {
+            let members:{alias:string,pub:string}[] = JSON.parse(data);
 
+            members = members.filter(s=>s.pub !== pubkey);
+            
+            let res = await this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify(members));
+            return (res);
+        } else {
+            return {}
+        }
     }
 
     async groupInviteAdmin() {
