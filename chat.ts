@@ -288,12 +288,25 @@ export default class Chat {
      * @param groupname 
      * @param info 
      */
-    async groupSetInfo(groupname : string, info: { pict: string; desc: string; } = {pict : "", desc: ""}) : Promise<void> {
-        if (info.pict) {
-            this.firegun.userPut(`chat-group/${groupname}/info/pict`,info.pict)
-        }
-        if (info.desc) {
-            this.firegun.userPut(`chat-group/${groupname}/info/desc`,info.desc)
+    async groupSetInfo(groupname: string, groupDesc:string, groupImage:string) : Promise<string> {
+        if (this.firegun.user.alias) {
+            return new Promise(async (resolve, reject) => {
+                let promises:any[] = [];
+                promises.push(this.firegun.userPut(`chat-group/${groupname}/info/name`,groupname))
+                promises.push(this.firegun.userPut(`chat-group/${groupname}/info/desc`,groupDesc))
+                promises.push(this.firegun.userPut(`chat-group/${groupname}/info/image`,groupImage))
+                promises.push(this.firegun.userPut(`chat-group-with/${this.firegun.user.pair.pub}&${groupname}`,{"t" : "_"}));
+                Promise.allSettled(promises)
+                .then(()=>{
+                    resolve("OK");
+                })
+                .catch(s=>{
+                    console.log(s);
+                    reject(s);
+                })
+            });
+        } else {
+            return "User not Logged in"
         }
     }
 
@@ -322,12 +335,38 @@ export default class Chat {
         }
     }
 
-    async groupInviteAdmin() {
-
+    async groupInviteAdmin(groupname: string, pubkey: string, alias : string) {
+        let data = await this.firegun.userGet(`chat-group/${groupname}/admins`);
+        if (typeof data === "string") {
+            let members = JSON.parse(data);
+            members.push({
+                "alias" : alias,
+                "pub" : pubkey,
+            })            
+            let res = await this.firegun.userPut(`chat-group/${groupname}/admins`,JSON.stringify(members));
+            return (res);
+        } else {
+            let members = {
+                "alias" : alias,
+                "pub" : pubkey,
+            }
+            let res = await this.firegun.userPut(`chat-group/${groupname}/admins`,JSON.stringify(members));
+            return (res);
+        }
     }
 
-    async groupBanAdmin() {
+    async groupBanAdmin(groupname:string, pubkey:string) {
+        let data = await this.firegun.userGet(`chat-group/${groupname}/admins`);
+        if (typeof data === "string") {
+            let members:{alias:string,pub:string}[] = JSON.parse(data);
 
+            members = members.filter(s=>s.pub !== pubkey);
+            
+            let res = await this.firegun.userPut(`chat-group/${groupname}/admins`,JSON.stringify(members));
+            return (res);
+        } else {
+            return {}
+        }
     }
 
 }
