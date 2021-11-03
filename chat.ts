@@ -336,23 +336,24 @@ export default class Chat {
     }
 
     async groupInviteAdmin(groupname: string, pubkey: string, alias : string) {
-        let data = await this.firegun.userGet(`chat-group/${groupname}/admins`);
-        if (typeof data === "string") {
-            let members = JSON.parse(data);
-            members.push({
-                "alias" : alias,
-                "pub" : pubkey,
-            })            
-            let res = await this.firegun.userPut(`chat-group/${groupname}/admins`,JSON.stringify(members));
-            return (res);
-        } else {
-            let members = {
-                "alias" : alias,
-                "pub" : pubkey,
+        var data:string;
+        try {
+            let s = await this.firegun.userGet(`chat-group/${groupname}/admins`); 
+            if (typeof s === "string") {
+                data = s;
+            } else {
+                data = JSON.stringify([]);                
             }
-            let res = await this.firegun.userPut(`chat-group/${groupname}/admins`,JSON.stringify(members));
-            return (res);
+        } catch (error) {
+            data = JSON.stringify([]);
         }
+        let members = JSON.parse(data);
+        members.push({
+            "alias" : alias,
+            "pub" : pubkey,
+        })            
+        let res = await this.firegun.userPut(`chat-group/${groupname}/admins`,JSON.stringify(members));
+        return (res);
     }
 
     async groupBanAdmin(groupname:string, pubkey:string) {
