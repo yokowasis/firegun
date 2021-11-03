@@ -26,6 +26,7 @@ export default class Firegun {
     prefix : string;
     gun : IGunChainReference;
     Gun : IGunStatic;
+    peers : string[];
     user : FiregunUser;
     ev : {
         [key:string] : {
@@ -56,6 +57,7 @@ export default class Firegun {
         gunInstance: (IGunChainReference | null) = null) {
 
         this.prefix = prefix;
+        this.peers = peers;
 
         if (gunInstance) {
             this.gun = gunInstance;
