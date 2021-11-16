@@ -431,6 +431,28 @@ export default class Chat {
         }
     }
 
+    async groupGetMembers(groupOwner:string, groupName:string) : Promise<{alias:string, pub:string}[]> {
+        var data;
+        try {
+            
+            let s = await this.firegun.Get(`~${groupOwner}/chat-group/${groupName}/members`);
+            if (typeof s === "string") {
+                data = s
+            } else {
+                data = JSON.stringify([]);
+            }
+            
+        } catch (error) {
+            data = JSON.stringify([]);            
+        }
+        if (typeof data === "string") {
+            let members = JSON.parse(data);
+            return members
+        } else {
+            return []
+        }
+    }
+
     async groupInviteAdmin(groupname: string, pubkey: string, alias : string) {
         var data:string;
         try {
