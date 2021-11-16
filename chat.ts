@@ -299,10 +299,8 @@ export default class Chat {
             valid = true
         } else {
             // bukan pemilik, cek apakah termasuk ke dalam admin
-            if ((await this.groupGetAdmin(groupowner,groupname)).includes({
-                alias : this.firegun.user.alias,
-                pub : currentUser
-            })) {
+            let admins = await this.groupGetAdmin(groupowner,groupname);
+            if (admins.some(e => e.pub === currentUser)) {
                 valid = true
             }
         }
