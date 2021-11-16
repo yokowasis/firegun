@@ -284,32 +284,26 @@ export default class Chat {
         }
 
         if (this.firegun.user.alias && valid) {
-            let data = await this.firegun.userGet(`chat-group/${groupname}/members`);
-            if (typeof data === "string") {
-                let members = JSON.parse(data);
-                members.push({
-                    "alias" : alias,
-                    "pub" : pubkey,
-                })            
-
-                let res;
-                if (currentUser === groupowner) {
-                    res = await this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify(members));
-                } else {
-                    let cert:string;
-                    try {
-                        cert = await this.firegun.Get(`~${groupowner}/chat-group/${groupname}/adminCert`) as string;
-                        res = await this.firegun.Put(`~${groupowner}/chat-group/${groupname}/members`,JSON.stringify(members),false,"",{opt : { cert : cert}});
-                    } catch (error) {
-                        res = {}
-                    }                        
-                }    
-                return (res);
+            let members = await this.groupGetMembers(groupowner,groupname);
+            members.push({
+                "alias" : alias,
+                "pub" : pubkey,
+            })            
+    
+            let res;
+            if (currentUser === groupowner) {
+                res = await this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify(members));
             } else {
-                return {}
-            }
+                let cert:string;
+                try {
+                    cert = await this.firegun.Get(`~${groupowner}/chat-group/${groupname}/adminCert`) as string;
+                    res = await this.firegun.Put(`~${groupowner}/chat-group/${groupname}/members`,JSON.stringify(members),false,"",{opt : { cert : cert}});
+                } catch (error) {
+                    res = {}
+                }                        
+            }    
         } else {
-            return "User not Logged in"
+            return "User have no right"
         }
     }
 
