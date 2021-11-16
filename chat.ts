@@ -420,7 +420,7 @@ export default class Chat {
         // Cek lagi untuk add multi user pubkey, instead of *. Terakhir kali coba gagal.
         let cert = await (this.firegun.Gun as any)
                     .SEA.certify("*", [
-                        { "*" : `chat-group`,"+" : "*"}
+                        { "*" : `chat-group`}
                     ], this.firegun.user.pair,null,{
             // block : `chat-group/${groupname}/banlist` //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
         });
