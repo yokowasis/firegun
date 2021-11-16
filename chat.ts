@@ -288,14 +288,14 @@ export default class Chat {
      * @param groupname 
      * @param info 
      */
-    async groupSetInfo(groupname: string, groupDesc:string, groupImage:string) : Promise<string> {
+    async groupSetInfo(groupowner:string, groupname: string, groupDesc:string, groupImage:string) : Promise<string> {
         if (this.firegun.user.alias) {
             return new Promise(async (resolve, reject) => {
                 let promises:any[] = [];
-                promises.push(this.firegun.userPut(`chat-group/${groupname}/info/name`,groupname))
-                promises.push(this.firegun.userPut(`chat-group/${groupname}/info/desc`,groupDesc))
-                promises.push(this.firegun.userPut(`chat-group/${groupname}/info/image`,groupImage))
-                promises.push(this.firegun.userPut(`chat-group-with/${this.firegun.user.pair.pub}&${groupname}`,{"t" : "_"}));
+                promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/name`,groupname))
+                promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/desc`,groupDesc))
+                promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/image`,groupImage))
+                promises.push(this.firegun.Put(`~${groupowner}/chat-group-with/${this.firegun.user.pair.pub}&${groupname}`,{"t" : "_"}));
                 Promise.allSettled(promises)
                 .then(()=>{
                     resolve("OK");
@@ -316,8 +316,21 @@ export default class Chat {
      * @param groupname 
      * @returns 
      */
-    async groupGetInfo(groupname : string) {
-        let data = await this.firegun.userGet(`chat-group/${groupname}/info`);
+    async groupGetInfo(groupowner:string, groupname : string) {
+        let data: {
+            desc : string,
+            name : string,
+            image : string,
+        };
+        try {
+            data = (await this.firegun.Get(`~${groupowner}/chat-group/${groupname}/info`) as any);
+        } catch (error) {
+            data = {
+                desc : "",
+                name : "",
+                image : "",
+            }
+        }
         return (data)        
     }
 
@@ -332,6 +345,26 @@ export default class Chat {
             return (res);
         } else {
             return {}
+        }
+    }
+
+    async groupGetAdmin(groupOwner:string, groupName:string) : Promise<{alias:string, pub:string}[]> {
+        var data;
+        try {
+            let s = await this.firegun.Get(`~${groupOwner}/chat-group/${groupName}/admins`);
+            if (typeof s === "string") {
+                data = s
+            } else {
+                data = JSON.stringify([]);
+            }
+        } catch (error) {
+            data = JSON.stringify([]);            
+        }
+        if (typeof data === "string") {
+            let members = JSON.parse(data);
+            return members
+        } else {
+            return []
         }
     }
 
