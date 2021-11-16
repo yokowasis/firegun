@@ -289,13 +289,46 @@ export default class Chat {
      * @param info 
      */
     async groupSetInfo(groupowner:string, groupname: string, groupDesc:string, groupImage:string) : Promise<string> {
-        if (this.firegun.user.alias) {
+
+        // Verifikasi apakah user yang mengakses adalah pemilik group atau masuk ke dalam list admin
+        let currentUser = this.firegun.user.pair.pub;
+
+        let valid = false;
+        if (currentUser === groupowner) {
+            // user yg login adalah pemilik group
+            valid = true
+        } else {
+            // bukan pemilik, cek apakah termasuk ke dalam admin
+            if ((await this.groupGetAdmin(groupowner,groupname)).includes({
+                alias : this.firegun.user.alias,
+                pub : currentUser
+            })) {
+                valid = true
+            }
+        }
+
+        if (this.firegun.user.alias && valid) {
             return new Promise(async (resolve, reject) => {
                 let promises:any[] = [];
-                promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/name`,groupname))
-                promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/desc`,groupDesc))
-                promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/image`,groupImage))
-                promises.push(this.firegun.Put(`~${groupowner}/chat-group-with/${this.firegun.user.pair.pub}&${groupname}`,{"t" : "_"}));
+                if (currentUser === groupowner) {
+                    promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/name`,groupname))
+                    promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/desc`,groupDesc))
+                    promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/image`,groupImage))
+                } else {
+                    let cert:string;
+                    try {
+                        cert = await this.firegun.Get(`~${groupowner}/chat-group/${groupname}/adminCert`) as string;
+                    } catch (error) {
+                        cert = ""
+                    }
+
+                    if (cert) {
+                        promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/name`,groupname,false,"",{ opt : { cert : cert} }))
+                        promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/desc`,groupDesc,false,"",{ opt : { cert : cert} }))
+                        promises.push(this.firegun.Put(`~${groupowner}/chat-group/${groupname}/info/image`,groupImage,false,"",{ opt : { cert : cert} }))
+                    }
+                }
+                promises.push(this.firegun.userPut(`~${groupowner}/chat-group-with/${this.firegun.user.pair.pub}&${groupname}`,{"t" : "_"}));
                 Promise.allSettled(promises)
                 .then(()=>{
                     resolve("OK");
@@ -385,7 +418,18 @@ export default class Chat {
             "alias" : alias,
             "pub" : pubkey,
         })            
+
+        // Cek lagi untuk add multi user pubkey, instead of *. Terakhir kali coba gagal.
+        let cert = await (this.firegun.Gun as any)
+                    .SEA.certify("*", [
+                        { "*" : `chat-group`,"+" : "*"}
+                    ], this.firegun.user.pair,null,{
+            // block : `chat-group/${groupname}/banlist` //ADA BUG DARI GUN JADI BELUM BISA BLACKLIST
+        });
+
         let res = await this.firegun.userPut(`chat-group/${groupname}/admins`,JSON.stringify(members));
+        await this.firegun.userPut(`chat-group/${groupname}/adminCert`,cert);
+
         return (res);
     }
 
