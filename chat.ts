@@ -266,18 +266,50 @@ export default class Chat {
      * @param groupname
      * @param pairkey 
      */
-    async groupInvite(groupname: string, pubkey: string, alias : string) {
-        let data = await this.firegun.userGet(`chat-group/${groupname}/members`);
-        if (typeof data === "string") {
-            let members = JSON.parse(data);
-            members.push({
-                "alias" : alias,
-                "pub" : pubkey,
-            })            
-            let res = await this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify(members));
-            return (res);
+    async groupInvite(groupowner:string, groupname: string, pubkey: string, alias : string) {
+
+        // Verifikasi apakah user yang mengakses adalah pemilik group atau masuk ke dalam list admin
+        let currentUser = this.firegun.user.pair.pub;
+
+        let valid = false;
+        if (currentUser === groupowner) {
+            // user yg login adalah pemilik group
+            valid = true
         } else {
-            return {}
+            // bukan pemilik, cek apakah termasuk ke dalam admin
+            let admins = await this.groupGetAdmin(groupowner,groupname);
+            if (admins.some(e => e.pub === currentUser)) {
+                valid = true
+            }
+        }
+
+        if (this.firegun.user.alias && valid) {
+            let data = await this.firegun.userGet(`chat-group/${groupname}/members`);
+            if (typeof data === "string") {
+                let members = JSON.parse(data);
+                members.push({
+                    "alias" : alias,
+                    "pub" : pubkey,
+                })            
+
+                let res;
+                if (currentUser === groupowner) {
+                    res = await this.firegun.userPut(`chat-group/${groupname}/members`,JSON.stringify(members));
+                } else {
+                    let cert:string;
+                    try {
+                        cert = await this.firegun.Get(`~${groupowner}/chat-group/${groupname}/adminCert`) as string;
+                        res = await this.firegun.Put(`~${groupowner}/chat-group/${groupname}/members`,JSON.stringify(members),false,"",{opt : { cert : cert}});
+                    } catch (error) {
+                        res = {}
+                    }                        
+                }    
+                return (res);
+            } else {
+                return {}
+            }
+        } else {
+            return "User not Logged in"
         }
     }
 
