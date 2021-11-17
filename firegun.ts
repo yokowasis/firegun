@@ -24,6 +24,7 @@ function randomAlphaNumeric(length:number):string {
 export default class Firegun {
 
     prefix : string;
+    dbname : string;
     gun : IGunChainReference;
     Gun : IGunStatic;
     peers : string[];
@@ -58,6 +59,7 @@ export default class Firegun {
 
         this.prefix = prefix;
         this.peers = peers;
+        this.dbname = dbname;
 
         if (gunInstance) {
             this.gun = gunInstance;
@@ -711,5 +713,19 @@ export default class Firegun {
                 reject(err);
             })
         });
+    }
+
+    clearData() {
+        var req = indexedDB.deleteDatabase(this.dbname);
+        req.onsuccess = function () {
+            console.log("Deleted database successfully");
+        };
+        req.onerror = function () {
+            console.log("Couldn't delete database");
+        };
+        req.onblocked = function () {
+            console.log("Couldn't delete database due to the operation being blocked");
+        };
+        localStorage.clear();
     }
 }
