@@ -301,7 +301,8 @@ export default class Chat {
                 } catch (error) {
                     res = {}
                 }                        
-            }    
+            }
+            return (res);
         } else {
             return "User have no right"
         }
