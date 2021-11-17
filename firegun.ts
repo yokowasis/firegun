@@ -719,6 +719,7 @@ export default class Firegun {
         var req = indexedDB.deleteDatabase(this.dbname);
         req.onsuccess = function () {
             console.log("Deleted database successfully");
+            location.reload();
         };
         req.onerror = function () {
             console.log("Couldn't delete database");
