@@ -33,6 +33,18 @@ export default class Chat {
         return await common.generatePublicCert(this.firegun);
     }
 
+    async decryptChat (s:{[x:string] : any},pubkey : Pubkey) {
+        if (s.msg) {
+            if ((typeof s.msg === "string") && (s.msg.search("SEA") === 0))
+            if (s._self) {
+                s.msg = await this.firegun.Gun.SEA.decrypt(s.msg, this.firegun.user.pair);
+            } else {
+                s.msg = await this.firegun.Gun.SEA.decrypt(s.msg, await (this.firegun.Gun as any).SEA.secret(pubkey.epub, this.firegun.user.pair));
+            }
+            return (s);
+        }
+    }
+
     /**
      * --------------------
      * Retrieving chats
@@ -40,32 +52,14 @@ export default class Chat {
      * @param date 
      * @returns
      */
-    async retrieve(pubkey: Pubkey, date : string[] = []) {
-        return new Promise(async (resolve, reject) => {
-            if (!this.firegun.user.alias) {
-                reject("User Belum Login")
-            } else {
-                console.log ("RETRIEVING ...");
-                let data : {[key:string] : any} | undefined = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.join("/")}`);
-                let sortedData : {}[] = [];
-                console.log ("DONE !!");
-                for (const key in data) {
-                    if (Object.hasOwnProperty.call(data, key)) {
-                        if (pubkey.epub) {
-                            if (data[key]._self) {
-                                data[key].msg = await this.firegun.Gun.SEA.decrypt(data[key].msg, this.firegun.user.pair);
-                            } else {
-                                data[key].msg = await this.firegun.Gun.SEA.decrypt(data[key].msg, await (this.firegun.Gun as any).SEA.secret(pubkey.epub, this.firegun.user.pair));
-                            }
-                        }
-                    }
-                    sortedData.push(data[key]);
-                }
-                sortedData.sort(common.dynamicSort("timestamp"));
-                resolve(sortedData);
-            }            
-        });
-
+    async retrieve(pubkey: Pubkey, date:string, month:string, year:string,callback:(s:{[x:string] : any})=>void) {
+        this.firegun.gun.user().get("chat-with").get(pubkey.pub).get(year).get(month).get(date).map().once(async (s)=>{
+            if (s) {
+                s = await this.decryptChat(s,pubkey);
+                if (s)
+                    callback(s);
+            }
+        })
     }
 
     async searchChat (searchString:string, pub:string, epub:string, callback:(s:{[x:string] : string})=>void) {
