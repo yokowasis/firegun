@@ -65,10 +65,18 @@ export default class Chat {
     }
 
     
-    async groupRetrieveChat(memberPub:string, groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any})=>void) {
-        this.firegun.gun.get(`~${memberPub}`).get("chat-group-with").get(`${groupkey.owner}&${groupkey.alias}`).get(date.year).get(date.month).get(date.date).map().once(async (s)=>{
-            if (s)
-                callback(s);
+    async groupRetrieveChat(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any},alwaysSelf? : boolean)=>void) {
+
+        this.groupGetMembers(groupkey.owner,groupkey.alias)
+        .then(members => {
+            members.forEach(async (member) => {
+                this.firegun.gun.get(`~${member.pub}`).get("chat-group-with").get(`${groupkey.owner}&${groupkey.alias}`).get(date.year).get(date.month).get(date.date).map().once(async (s)=>{
+                    if (s) {
+                        callback(s);
+                        callback(s,member.pub === this.firegun.user.pair.pub);
+                    }                        
+                })            
+            })    
         })
     }
 
