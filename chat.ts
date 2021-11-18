@@ -52,8 +52,8 @@ export default class Chat {
      * @param date 
      * @returns
      */
-    async retrieve(pubkey: Pubkey, date:string, month:string, year:string,callback:(s:{[x:string] : any})=>void) {
-        this.firegun.gun.user().get("chat-with").get(pubkey.pub).get(year).get(month).get(date).map().once(async (s)=>{
+    async retrieve(ownerPub:string, pubkey: Pubkey, date:string, month:string, year:string,callback:(s:{[x:string] : any})=>void) {
+        this.firegun.gun.get(`~${ownerPub}`).get("chat-with").get(pubkey.pub).get(year).get(month).get(date).map().once(async (s)=>{
             if (s) {
                 s = await this.decryptChat(s,pubkey);
                 if (s)
