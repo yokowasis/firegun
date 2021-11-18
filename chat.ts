@@ -68,6 +68,29 @@ export default class Chat {
 
     }
 
+    async searchChat (searchString:string, pub:string, epub:string, callback:(s:{[x:string] : string})=>void) {
+        let date = common.getDate();
+        this.firegun.gun.user().get("chat-with")
+            .get(pub)
+            .get(date.year)
+            .once().map()
+            .once().map()
+            .once().map()
+            .once(async (s)=>{
+                if (s !== undefined) {
+                    if ((typeof s.msg === "string") && (s.msg.search("SEA") === 0))
+                    if (s._self) {
+                        s.msg = await this.firegun.Gun.SEA.decrypt(s.msg, this.firegun.user.pair);
+                    } else {
+                        s.msg = await this.firegun.Gun.SEA.decrypt(s.msg, await (this.firegun.Gun as any).SEA.secret(epub, this.firegun.user.pair));
+                    }                        
+                    if (s.msg !== undefined && s.msg.toLowerCase().indexOf(searchString.toLowerCase()) !== -1) {
+                        callback(s);
+                    }    
+                }
+            })
+    }
+
     async unsend(pairkey: Pubkey,date:string,chatID: string,cert=""): Promise<string> {
         return new Promise(async (resolve, reject) => {
             if (!this.firegun.user.alias) {
