@@ -42,6 +42,8 @@ export default class Chat {
                 s.msg = await this.firegun.Gun.SEA.decrypt(s.msg, await (this.firegun.Gun as any).SEA.secret(pubkey.epub, this.firegun.user.pair));
             }
             return (s);
+        } else {
+            return ({})
         }
     }
 
