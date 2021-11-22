@@ -120,6 +120,52 @@ export default class Chat {
         })
     }
 
+    async groupRetrieveChatMonthly(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any},alwaysSelf? : boolean)=>void) {
+
+        let dateNow = common.getDate()
+
+        this.groupGetMembers(groupkey.owner,groupkey.alias)
+        .then(members => {
+            members.forEach(async (member) => {
+
+                let data = await this.firegun.Load(`~${member.pub}/chat-group-with/${groupkey.owner}&${groupkey.alias}/${date.year}/${date.month}`);
+                if (data)
+                for (const date in data.data) {
+                    const chatInDate = data.data[date].data;
+                    for (const id in chatInDate) {
+                        if (Object.prototype.hasOwnProperty.call(chatInDate, id)) {
+                            let s = chatInDate[id].data;
+                            console.log (s);
+                            if (s && s.id) {
+                                if (s) {
+                                    callback(s,member.pub === this.firegun.user.pair.pub);
+                                }
+                            }
+                        }
+                    }
+                }
+        
+        
+
+                this.firegun.gun.get(`~${member.pub}`).get("chat-group-with").get(`${groupkey.owner}&${groupkey.alias}`).get(date.year).get(date.month).get(date.date).map((s)=>{
+                    if (s && s.id) {
+                        if (s.id > `${dateNow.year}.${dateNow.month}.${dateNow.date}T${dateNow.hour}:${dateNow.minutes}:${dateNow.seconds}.${dateNow.miliseconds}`) {
+                            return (s)                                                                                                
+                        } else {
+                            return null
+                        }
+                    } else {
+                        return null
+                    }        
+                }).once(async (s)=>{
+                    if (s) {
+                        callback(s,member.pub === this.firegun.user.pair.pub);
+                    }                        
+                })            
+            })    
+        })
+    }
+
     async searchChat (searchString:string, pub:string, epub:string, callback:(s:{[x:string] : string})=>void) {
         let date = common.getDate();
         this.firegun.gun.user().get("chat-with")
