@@ -55,7 +55,7 @@ export default class Chat {
      * @param callback 
      */
     async retrieve(pubkey: Pubkey, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any})=>void) {
-        this.firegun.gun.user().get("chat-with").get(pubkey.pub).get(date.year).get(date.month).once().map().once().map().once(async (s)=>{
+        this.firegun.gun.user().get("chat-with").get(pubkey.pub).get(date.year).get(date.month).get(date.date).map().once(async (s)=>{
             if (s && s.id) {
                 s = await this.decryptChat(s,pubkey);
                 if (s)
@@ -64,8 +64,39 @@ export default class Chat {
         })
     }
 
-    async retrieveMonthly(pubkey: Pubkey, date : {month:string, year:string} ,callback:(s:{[x:string] : any})=>void) {
-        this.firegun.gun.user().get("chat-with").get(pubkey.pub).get(date.year).get(date.month).once().map().once().map().once(async (s)=>{
+    async retrieveMonthly(pubkey: Pubkey, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any})=>void) {
+        let dateNow = common.getDate()
+        let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.year}/${date.month}`);
+
+        // Load chat for 1 month
+        if (data)
+        for (const date in data.data) {
+            const chatInDate = data.data[date].data;
+            for (const id in chatInDate) {
+                if (Object.prototype.hasOwnProperty.call(chatInDate, id)) {
+                    let s = chatInDate[id].data;
+                    console.log (s);
+                    if (s && s.id) {
+                        s = await this.decryptChat(s,pubkey);
+                        if (s)
+                            callback(s);
+                    }
+                }
+            }
+        }
+
+        // Listen to new chat today
+        this.firegun.gun.user().get("chat-with").get(pubkey.pub).get(date.year).get(date.month).get(date.date).map((s)=>{
+            if (s && s.id) {
+                if (s.id > `${dateNow.year}.${dateNow.month}.${dateNow.date}T${dateNow.hour}:${dateNow.minutes}:${dateNow.seconds}.${dateNow.miliseconds}`) {
+                    return (s)                                                                                                
+                } else {
+                    return null
+                }
+            } else {
+                return null
+            }
+        }).once(async (s)=>{
             if (s && s.id) {
                 s = await this.decryptChat(s,pubkey);
                 if (s)
@@ -76,7 +107,6 @@ export default class Chat {
 
     
     async groupRetrieveChat(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any},alwaysSelf? : boolean)=>void) {
-
         this.groupGetMembers(groupkey.owner,groupkey.alias)
         .then(members => {
             members.forEach(async (member) => {
