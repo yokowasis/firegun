@@ -340,12 +340,12 @@ export default class Firegun {
      * @param prefix Database Prefix
      * @returns
      */
-    async userLoad (path: string,async=false, repeat: number = 1,prefix: string=this.prefix): Promise<{[key : string] : any} | undefined> {
+    async userLoad (path: string,async=false,repeat: number = 1,prefix: string=this.prefix) : Promise<{data : {[s:string] : any}, err : {path : string, err : string}[]}> {
         if (this.user.alias) {
            path = `~${this.user.pair.pub}/${path}`
            return (await this.Load(path,async, repeat,prefix));
         } else {
-            return undefined;
+            return {data : {}, err : [{path : path, err : "User not logged in"}]};
         }
     }
 
@@ -659,7 +659,7 @@ export default class Firegun {
      * @param prefix node Prefix
      * @returns 
      */
-    async Load (path: string,async=false,repeat: number = 1,prefix: string=this.prefix) : Promise<{data : {[s:string] : {}}, err : {path : string, err : string}[]}> {
+    async Load (path: string,async=false,repeat: number = 1,prefix: string=this.prefix) : Promise<{data : {[s:string] : any}, err : {path : string, err : string}[]}> {
         return new Promise((resolve, reject) => {
             let promises :Promise<any>[] = []
             let obj : {data : {[s:string] : {}}, err : {path : string, err : string}[]} = { data : {}, err : []};
