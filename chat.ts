@@ -123,13 +123,13 @@ export default class Chat {
     }
     
     async listenUnsent(pubkey : Pubkey, callback:(chatID:string)=>void) {
-        let date = common.getDate();
-        // await this.firegun.Put(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${date}/unsendChat`,chatID,true,"",{opt : { cert : cert }})        
+        const dateNow = common.getDate();
+        const date = `${dateNow.year}/${dateNow.month}/${dateNow.date}`;
         this.firegun.On(`~${this.firegun.user.pair.pub}/chat-with/${pubkey.pub}/${date}/unsendChat`,(res)=>{
             if (typeof res === "string") {
                 callback(res);
             }
-        })
+        },pubkey.pub.substring(0,8),true);
     }
     
     async groupRetrieveChat(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any},alwaysSelf? : boolean)=>void) {
