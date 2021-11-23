@@ -122,6 +122,29 @@ export default class Chat {
         })
     }
 
+    async markAsRead (pairkey: Pubkey,date:string,chatID: string,cert=""): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            if (!this.firegun.user.alias) {
+                reject("User Belum Login")
+            } else {
+                if (cert === "") {
+                    let tempCert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
+                    if (typeof tempCert === "string") {
+                        cert = tempCert;
+                    }
+                }
+                
+                try {
+                    await this.firegun.Put(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${date}/${chatID}/status`,"read",true,"",{opt : { cert : cert }})
+                    await this.firegun.Put(`~${this.firegun.user.pair.pub}/chat-with/${pairkey.pub}/${date}/${chatID}/status`,"read")
+                    resolve("OK");                    
+                } catch (error) {
+                    reject (error);                
+                }
+            }
+        });        
+    }
+
     async groupRetrieveChatMonthly(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any},alwaysSelf? : boolean)=>void) {
 
         let dateNow = common.getDate()
@@ -214,6 +237,19 @@ export default class Chat {
             }
         });        
     }
+
+    deleteChat = (pubkey:string, chatID:string, timestamp:string) => {
+        const date = timestamp.split("T")[0];
+        this.firegun.userDel(`chat-with/${pubkey}/${date}/${chatID}`)
+        console.log ("DELETE", `chat-with/${pubkey}/${date}/${chatID}`);
+    }
+
+    groupDeleteChat = (groupID:string, chatID:string, timestamp:string) => {
+        const date = timestamp.split("T")[0];
+        this.firegun.userDel(`chat-group-with/${groupID}/${date}/${chatID}`)
+        console.log ("DELETE", `chat-with/${groupID}/${date}/${chatID}`);        
+    }
+
 
     /**
      * 
