@@ -1,4 +1,4 @@
-import { Ack, common, FiregunUser, Pubkey } from './common';
+import { Ack, chatType, common, FiregunUser, Pubkey } from './common';
 import Firegun from "./firegun";
 
 export default class Chat {
@@ -56,56 +56,49 @@ export default class Chat {
      * @param year 
      * @param callback 
      */
-    async retrieve(pubkey: Pubkey, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any})=>void) {
-        this.firegun.gun.user().get("chat-with").get(pubkey.pub).get(date.year).get(date.month).get(date.date).map().once(async (s)=>{
-            if (s && s.id) {
-                s = await this.decryptChat(s,pubkey);
-                if (s)
-                    callback(s);
+    async retrieveDaily(pubkey: Pubkey, date : {date:string, month:string, year:string}) {
+        let res = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.year}/${date.month}/${date.date}`);
+
+        // Load Data for 1 day
+        let chats:chatType[] = [];
+        if (res) {
+            for (const id in res.data) {
+                if (Object.prototype.hasOwnProperty.call(res.data, id)) {
+                    let s = res.data[id].data;
+                    if (s && s.id) {
+                        s = await this.decryptChat(s,pubkey);
+                        if (s)
+                            chats.push(s);
+                    }
+                }
             }
-        })
+        }
+
+        return chats;
     }
 
-    async retrieveMonthly(pubkey: Pubkey, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any})=>void) {
-        let dateNow = common.getDate()
-        let data = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.year}/${date.month}`);
+    async retrieveMonthly(pubkey: Pubkey, date : {month:string, year:string}) {
+        let res = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.year}/${date.month}`);
 
         // Load chat for 1 month
-        if (data)
-        for (const date in data.data) {
-            const chatInDate = data.data[date].data;
+        let chats:chatType[] = [];
+        if (res)
+        for (const date in res.data) {
+            const chatInDate = res.data[date].data;
             for (const id in chatInDate) {
                 if (Object.prototype.hasOwnProperty.call(chatInDate, id)) {
                     let s = chatInDate[id].data;
                     if (s && s.id) {
                         s = await this.decryptChat(s,pubkey);
                         if (s)
-                            callback(s);
+                            chats.push(s);
                     }
                 }
             }
         }
 
-        // Listen to new chat today
-        this.firegun.gun.user().get("chat-with").get(pubkey.pub).get(date.year).get(date.month).get(date.date).map((s)=>{
-            if (s && s.id) {
-                if (s.id > `${dateNow.year}.${dateNow.month}.${dateNow.date}T${dateNow.hour}:${dateNow.minutes}:${dateNow.seconds}.${dateNow.miliseconds}`) {
-                    return (s)                                                                                                
-                } else {
-                    return null
-                }
-            } else {
-                return null
-            }
-        }).once(async (s)=>{
-            if (s && s.id) {
-                s = await this.decryptChat(s,pubkey);
-                if (s)
-                    callback(s);
-            }
-        })
+        return chats;
     }
-
     
     async groupRetrieveChat(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any},alwaysSelf? : boolean)=>void) {
         this.groupGetMembers(groupkey.owner,groupkey.alias)
@@ -119,29 +112,6 @@ export default class Chat {
                 })            
             })    
         })
-    }
-
-    async markAsRead (pairkey: Pubkey,date:string,chatID: string,cert=""): Promise<string> {
-        return new Promise(async (resolve, reject) => {
-            if (!this.firegun.user.alias) {
-                reject("User Belum Login")
-            } else {
-                if (cert === "") {
-                    let tempCert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
-                    if (typeof tempCert === "string") {
-                        cert = tempCert;
-                    }
-                }
-                
-                try {
-                    await this.firegun.Put(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${date}/${chatID}/status`,"read",true,"",{opt : { cert : cert }})
-                    await this.firegun.Put(`~${this.firegun.user.pair.pub}/chat-with/${pairkey.pub}/${date}/${chatID}/status`,"read")
-                    resolve("OK");                    
-                } catch (error) {
-                    reject (error);                
-                }
-            }
-        });        
     }
 
     async groupRetrieveChatMonthly(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any},alwaysSelf? : boolean)=>void) {
