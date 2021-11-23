@@ -287,6 +287,7 @@ export default class Chat {
                 // Put to Penerima userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
                 promises.push(
                     await this.firegun.Put(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${datetime.year}/${datetime.month}/${datetime.date}/${timestamp.replace(/\//g, '.')}`,{
+                        "alias" : this.firegun.user.alias,
                         "id" : timestamp.replace(/\//g, '.'),
                         "_self" : false,
                         "timestamp" : timestamp, 
@@ -298,9 +299,11 @@ export default class Chat {
                         }
                     })
                 );
+
                 // Put to My userspace/chat-with/publickey/year/month/day * 2, Pengirim dan Penerima
                 promises.push(
                     await this.firegun.Put(`~${this.firegun.user.pair.pub}/chat-with/${`${pairkey.pub}`}/${datetime.year}/${datetime.month}/${datetime.date}/${timestamp.replace(/\//g, '.')}`,{
+                        "alias" : this.firegun.user.alias,
                         "id" : timestamp.replace(/\//g, '.'),
                         "_self" : true,
                         "timestamp" : timestamp, 
@@ -330,17 +333,17 @@ export default class Chat {
      * @returns 
      */
     async groupSend(groupowner: string,groupname: string,msg: string) : Promise<{data : Ack[],error : Ack[]}> {
-        console.log(groupowner);
         return new Promise(async (resolve, reject) => {
             let datetime = common.getDate()    
             let timestamp = `${datetime.year}/${datetime.month}/${datetime.date}T${datetime.hour}:${datetime.minutes}:${datetime.seconds}.${datetime.miliseconds}`;               
             
             await this.firegun.userPut(`chat-group-with/${groupowner}&${groupname}/${datetime.year}/${datetime.month}/${datetime.date}/${timestamp.replace(/\//g, '.')}`,{
+                "alias" : this.firegun.user.alias,
                 "id" : timestamp.replace(/\//g, '.'),
                 "_self" : true,
                 "timestamp" : timestamp, 
                 "msg" : msg, 
-                status : "sent"
+                "status" : "sent"
             })
             .then(s=>{
                 resolve(s)

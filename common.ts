@@ -29,6 +29,7 @@ export declare type Pubkey = {
 
 export declare type chatType = {
     _self : boolean, 
+    alias : string, 
     msg : string, 
     timestamp: string,
     id : string,
