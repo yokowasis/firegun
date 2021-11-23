@@ -77,7 +77,6 @@ export default class Chat {
             for (const id in chatInDate) {
                 if (Object.prototype.hasOwnProperty.call(chatInDate, id)) {
                     let s = chatInDate[id].data;
-                    console.log (s);
                     if (s && s.id) {
                         s = await this.decryptChat(s,pubkey);
                         if (s)
