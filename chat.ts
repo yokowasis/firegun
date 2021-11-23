@@ -122,6 +122,16 @@ export default class Chat {
         })
     }
     
+    async listenUnsent(pubkey : Pubkey, callback:(chatID:string)=>void) {
+        let date = common.getDate();
+        // await this.firegun.Put(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/${date}/unsendChat`,chatID,true,"",{opt : { cert : cert }})        
+        this.firegun.On(`~${this.firegun.user.pair.pub}/chat-with/${pubkey.pub}/${date}/unsendChat`,(res)=>{
+            if (typeof res === "string") {
+                callback(res);
+            }
+        })
+    }
+    
     async groupRetrieveChat(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any},alwaysSelf? : boolean)=>void) {
         this.groupGetMembers(groupkey.owner,groupkey.alias)
         .then(members => {

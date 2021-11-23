@@ -142,7 +142,7 @@ export default class Firegun {
      * @param different Whether to fetch only differnce, or all of nodes
      * @param prefix node prefix, default : ""
      */
-    async On (path: string,callback: ({ }) => void,ev: string = "default", different: boolean=true,prefix: string =this.prefix) : Promise<void> {
+    async On (path: string,callback: (result:{[key:string] : any} | string | undefined) => void,ev: string = "default", different: boolean=true,prefix: string =this.prefix) : Promise<void> {
         path = `${prefix}${path}`;
         let paths = path.split("/");
         let dataGun = this.gun;
