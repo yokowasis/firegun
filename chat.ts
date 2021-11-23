@@ -99,6 +99,28 @@ export default class Chat {
 
         return chats;
     }
+
+    async listen(pubkey : Pubkey, callback:(s:{[x:string] : any})=>void) {
+        let date = common.getDate();
+        this.firegun.gun.user().get("chat-with").get(pubkey.pub).get(date.year).get(date.month).get(date.date).map((s)=>{
+            if (s && s.id) {
+                // only listen to future chat
+                if (s.id > `${date.year}.${date.month}.${date.date}T${date.hour}:${date.minutes}:${date.seconds}.${date.miliseconds}`) {
+                    return (s)                                                                                                
+                } else {
+                    return null
+                }
+            } else {
+                return null
+            }
+        }).once(async (s)=>{
+            if (s && s.id) {
+                s = await this.decryptChat(s,pubkey);
+                if (s)
+                    callback(s);
+            }
+        })
+    }
     
     async groupRetrieveChat(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any},alwaysSelf? : boolean)=>void) {
         this.groupGetMembers(groupkey.owner,groupkey.alias)
