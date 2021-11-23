@@ -727,6 +727,8 @@ export default class Firegun {
         req.onblocked = function () {
             console.log("Couldn't delete database due to the operation being blocked");
         };
-        localStorage.clear();
+        localStorage.removeItem("gun");
+        localStorage.removeItem("fireDB");
+        localStorage.removeItem("radata");
     }
 }
