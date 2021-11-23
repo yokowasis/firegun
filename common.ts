@@ -118,7 +118,7 @@ export const common = {
      */
     getDate : () => {
         let currentdate = new Date(); 
-        let year = currentdate.getFullYear();
+        let year = currentdate.getFullYear().toString();
         let month  = zeroPad(currentdate.getMonth()+1,2);
         let date = zeroPad(currentdate.getDate(),2)
         let hour = zeroPad(currentdate.getHours(),2)
