@@ -73,6 +73,8 @@ export default class Chat {
                         if (s) {
                             if (s.timestamp <= readTimestamp) {
                                 s.status = "read";
+                            } else {
+                                s.status = "sent";
                             }
                             chats.push(s);
                         }                            
@@ -102,6 +104,8 @@ export default class Chat {
                         if (s) {
                             if (s.timestamp <= readTimestamp) {
                                 s.status = "read";
+                            } else {
+                                s.status = "sent";
                             }
                             chats.push(s);
                         }                            
@@ -368,6 +372,10 @@ export default class Chat {
                         "msg" : msgToMe, 
                         "status" : "sent"
                     })
+                )
+
+                promises.push(
+                    await this.markAsRead(pairkey,cert)
                 )
                 
                 Promise.all(promises)
