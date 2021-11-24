@@ -59,16 +59,23 @@ export default class Chat {
     async retrieveDaily(pubkey: Pubkey, date : {date:string, month:string, year:string}) {
         let res = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.year}/${date.month}/${date.date}`);
 
+        let readTimestamp = await this.getReadTimestamp(pubkey);
+
         // Load Data for 1 day
         let chats:chatType[] = [];
         if (res) {
             for (const id in res.data) {
                 if (Object.prototype.hasOwnProperty.call(res.data, id)) {
-                    let s = res.data[id].data;
+                    let s = res.data[id].data as chatType;
                     if (s && s.id) {
-                        s = await this.decryptChat(s,pubkey);
-                        if (s)
+                        let a = await this.decryptChat(s,pubkey)
+                        s = a as chatType;
+                        if (s) {
+                            if (s.timestamp <= readTimestamp) {
+                                s.status = "read";
+                            }
                             chats.push(s);
+                        }                            
                     }
                 }
             }
@@ -79,6 +86,7 @@ export default class Chat {
 
     async retrieveMonthly(pubkey: Pubkey, date : {month:string, year:string}) {
         let res = await this.firegun.userLoad(`chat-with/${pubkey.pub}/${date.year}/${date.month}`);
+        let readTimestamp = await this.getReadTimestamp(pubkey);
 
         // Load chat for 1 month
         let chats:chatType[] = [];
@@ -87,11 +95,16 @@ export default class Chat {
             const chatInDate = res.data[date].data;
             for (const id in chatInDate) {
                 if (Object.prototype.hasOwnProperty.call(chatInDate, id)) {
-                    let s = chatInDate[id].data;
+                    let s = chatInDate[id].data as chatType;
                     if (s && s.id) {
-                        s = await this.decryptChat(s,pubkey);
-                        if (s)
+                        let a = await this.decryptChat(s,pubkey)
+                        s = a as chatType;
+                        if (s) {
+                            if (s.timestamp <= readTimestamp) {
+                                s.status = "read";
+                            }
                             chats.push(s);
+                        }                            
                     }
                 }
             }
@@ -144,6 +157,49 @@ export default class Chat {
                 })            
             })    
         })
+    }
+
+    async listenMarkAsRead(pairkey: Pubkey, callback:(timeStamp:string)=>void) {
+        this.firegun.On(`~${this.firegun.user.pair.pub}/chat-with/${pairkey.pub}/readTimeStamp`,(s)=>{
+            if (typeof s==="string") {
+                callback(s);
+            }
+        });        
+    }
+
+    async getReadTimestamp(pairkey: Pubkey): Promise<string> {
+
+        let data:string;
+
+        try {
+            let s = await this.firegun.userGet(`chat-with/${pairkey.pub}/readTimeStamp`);
+            if (typeof s === "string") {
+                data = s;
+            } else {
+                data = ""
+            }
+        } catch (error) {
+            data = "";            
+        }
+
+        return (data);
+    }
+
+    async markAsRead(pairkey: Pubkey,cert=""): Promise<void> {
+        if (cert === "") {
+            let tempCert = await this.firegun.Get(`~${pairkey.pub}/chat-cert`);
+            if (typeof tempCert === "string") {
+                cert = tempCert;
+            }
+        }
+        let datetime = common.getDate()    
+        let timestamp = `${datetime.year}/${datetime.month}/${datetime.date}T${datetime.hour}:${datetime.minutes}:${datetime.seconds}.${datetime.miliseconds}`;               
+
+        await this.firegun.Put(`~${pairkey.pub}/chat-with/${this.firegun.user.pair.pub}/readTimeStamp`,timestamp,true, "",{
+            opt : {
+                cert : cert
+            }
+        });
     }
 
     async groupRetrieveChatMonthly(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any},alwaysSelf? : boolean)=>void) {
