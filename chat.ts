@@ -206,14 +206,11 @@ export default class Chat {
         });
     }
 
-    async groupRetrieveChatMonthly(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string} ,callback:(s:{[x:string] : any},alwaysSelf? : boolean)=>void) {
-
-        let dateNow = common.getDate()
-
-        this.groupGetMembers(groupkey.owner,groupkey.alias)
-        .then(members => {
-            members.forEach(async (member) => {
-
+    async groupRetrieveChatMonthly(groupkey: { owner:string, alias:string}, date : {date:string, month:string, year:string}):Promise<chatType[]> {
+        return new Promise(async (resolve) => {
+            let members = await this.groupGetMembers(groupkey.owner,groupkey.alias);
+            let res = [];
+            for (const member of members) {
                 let data = await this.firegun.Load(`~${member.pub}/chat-group-with/${groupkey.owner}&${groupkey.alias}/${date.year}/${date.month}`);
                 if (data)
                 for (const date in data.data) {
@@ -221,36 +218,45 @@ export default class Chat {
                     for (const id in chatInDate) {
                         if (Object.prototype.hasOwnProperty.call(chatInDate, id)) {
                             let s = chatInDate[id].data;
-                            console.log (s);
                             if (s && s.id) {
                                 if (s) {
-                                    callback(s,member.pub === this.firegun.user.pair.pub);
+                                    res.push(s)
                                 }
                             }
                         }
                     }
                 }
-        
-        
+            }
+            resolve (res);
+        });
+    }
 
-                this.firegun.gun.get(`~${member.pub}`).get("chat-group-with").get(`${groupkey.owner}&${groupkey.alias}`).get(date.year).get(date.month).get(date.date).map((s)=>{
-                    if (s && s.id) {
-                        if (s.id > `${dateNow.year}.${dateNow.month}.${dateNow.date}T${dateNow.hour}:${dateNow.minutes}:${dateNow.seconds}.${dateNow.miliseconds}`) {
-                            return (s)                                                                                                
-                        } else {
-                            return null
-                        }
+    async groupListen(groupkey: { owner:string, alias:string}, callback:(s:chatType)=>void) {
+        let date = common.getDate();
+
+        let members = await this.groupGetMembers(groupkey.owner,groupkey.alias);
+        for (const member of members) {
+            this.firegun.gun.get(`~${member.pub}`).get("chat-group-with").get(`${groupkey.owner}&${groupkey.alias}`).get(date.year).get(date.month).get(date.date).map((s)=>{
+                if (s && s.id) {
+                    // only listen to future chat
+                    if (s.id > `${date.year}.${date.month}.${date.date}T${date.hour}:${date.minutes}:${date.seconds}.${date.miliseconds}`) {
+                        return (s)                                                                                                
                     } else {
                         return null
-                    }        
-                }).once(async (s)=>{
+                    }
+                } else {
+                    return null
+                }    
+            }).once(s=>{
+                if (s && s.id) {
                     if (s) {
-                        callback(s,member.pub === this.firegun.user.pair.pub);
+                        let a = s as chatType;
+                        callback(a);
                     }                        
-                })            
-            })    
-        })
-    }
+                }    
+            });
+        }
+    }    
 
     async searchChat (searchString:string, pub:string, epub:string, callback:(s:{[x:string] : string})=>void) {
         let date = common.getDate();
