@@ -49,29 +49,43 @@ export default class Firegun {
      * @param gunInstance use an existing gunDB instance, default : null
      */
     constructor(
-        peers: string[] = [],
-        dbname: string = "fireDB",
-        localstorage: boolean = false,
-        prefix: string = "",
-        axe: boolean = false,
-        port: number = 8765,
-        gunInstance: (IGunChainReference | null) = null) {
+        option? : {
+            peers?: string[],
+            dbname?: string,
+            localstorage?: boolean,
+            prefix?: string,
+            axe?: boolean,
+            port?: number,
+            gunInstance?: (IGunChainReference | null),
+        },
+        ) {
 
-        this.prefix = prefix;
-        this.peers = peers;
-        this.dbname = dbname;
+        if (option) {
+            option.peers = option.peers || [],
+            option.dbname = option.dbname || "fireDB",
+            option.localstorage = option.localstorage || false,
+            option.prefix = option.prefix || "",
+            option.axe = option.axe || false,
+            option.port = option.port || 8765,
+            option.gunInstance = option.gunInstance || null
+        }
 
-        if (gunInstance) {
-            this.gun = gunInstance;
+
+        this.prefix = option?.prefix || "";
+        this.peers = option?.peers || [];
+        this.dbname = option?.dbname || "fireDB";
+
+        if (option?.gunInstance) {
+            this.gun = option.gunInstance;
         } else {
             this.gun = Gun({
-                file : dbname,
-                localStorage : localstorage,
-                axe : axe,
+                file : option?.dbname,
+                localStorage : option?.localstorage,
+                axe : option?.axe,
                 multicast : {
-                    port : port
+                    port : option?.port
                 },
-                peers : peers
+                peers : option?.peers
             })    
         }
 
