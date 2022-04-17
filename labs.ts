@@ -9,15 +9,10 @@ import { Firegun } from './index';
 //     console.log('File data:', JSON.parse(jsonString)["~"]) 
 // })
 
-const fg = 
-new Firegun();
+const fg = new Firegun({
+    peers : ["https://gun-relay.bimasoft.web.id:16902/gun"]
+});
 
 (async ()=>{
-    fg.Put
-    ('test/paste',
-    "Coba dari local 5x")
-
+    
 })()
-
-
-

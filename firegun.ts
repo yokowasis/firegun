@@ -153,6 +153,26 @@ export default class Firegun {
     }
 
     /**
+     * Listen changes on path
+     * 
+     * @param path node path
+     * @param callback callback
+     * @param prefix node prefix, default : ""
+     */
+     async Listen (path: string,callback: (result:{[key:string] : any} | string | undefined) => void,prefix: string =this.prefix) : Promise<void> {
+        path = `${prefix}${path}`;
+        let paths = path.split("/");
+        let dataGun = this.gun;
+        
+        paths.forEach(path => {
+            dataGun = dataGun.get(path);
+        });
+        dataGun.map().once((s:any)=>{
+            callback(s);
+        });
+     }
+
+    /**
      * New subscription on Path. When data on Path changed, callback is called.
      * 
      * @param path node path
