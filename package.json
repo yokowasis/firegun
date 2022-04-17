@@ -1,6 +1,6 @@
 {
     "name": "@yokowasis/firegun",
-    "version": "1.8.8",
+    "version": "1.8.9",
     "description": "gunDB Wrapper for easy access and use.",
     "license": "MIT",
     "repository": "yokowasis/firegun",
@@ -24,6 +24,7 @@
         "tscw": "tsc --watch"
     },
     "devDependencies": {
+        "@types/node": "^17.0.24",
         "jest": "^27.3.1",
         "ts-loader": "^9.2.6",
         "ts-node-dev": "^1.1.8",
