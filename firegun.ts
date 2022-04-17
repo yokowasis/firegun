@@ -3,12 +3,15 @@ import Gun from 'gun';
 import 'gun/sea';
 import 'gun/lib/radix';
 import 'gun/lib/radisk';
-import 'gun/lib/store';
+// import 'gun/lib/store';
 import 'gun/lib/rindexed';
 
 import { FiregunUser, Ack, common } from './common'
+// @ts-ignore
 import { IGunChainReference } from "gun/types/chain";
+// @ts-ignore
 import { IGunCryptoKeyPair } from "gun/types/types";
+// @ts-ignore
 import { IGunStatic } from 'gun/types/static';
 
 function randomAlphaNumeric(length:number):string {
@@ -78,6 +81,7 @@ export default class Firegun {
         if (option?.gunInstance) {
             this.gun = option.gunInstance;
         } else {
+            // @ts-ignore
             this.gun = Gun({
                 file : option?.dbname,
                 localStorage : option?.localstorage,
@@ -89,6 +93,7 @@ export default class Firegun {
             })    
         }
 
+        // @ts-ignore
         this.Gun = Gun;
 
         // Auto Login
@@ -197,7 +202,7 @@ export default class Firegun {
         let hash = await this.Gun.SEA.work(data, null, undefined, {name: "SHA-256"});
         return new Promise((resolve) => {
             if (hash)
-            this.gun.get(`${key}`).get(hash).put(<any>data,(s)=>{
+            this.gun.get(`${key}`).get(hash).put(<any>data,(s:any)=>{
                 resolve(<Ack>s);
             });
         });        
@@ -226,7 +231,7 @@ export default class Firegun {
             alias = pair.pub.slice(0,8);
         }
         return new Promise((resolve,reject)=>{
-            this.gun.user().auth(pair as any,(s=>{
+            this.gun.user().auth(pair as any,((s:any)=>{
                 if ("err" in s) {
                     this.userLogout()
                     reject (s.err)
@@ -252,7 +257,7 @@ export default class Firegun {
      */
     async userNew (username: string, password: string,alias:string = ""): Promise<{ err: string } | FiregunUser > {
         return new Promise((resolve,reject)=>{
-            this.gun.user().create(username,password,async (s)=>{
+            this.gun.user().create(username,password,async (s:any)=>{
                 if ("err" in s) {
                     reject(s);
                 } else {
@@ -280,7 +285,7 @@ export default class Firegun {
      */
     async userLogin (username: string, password: string, alias:string = "", repeat: number=2): Promise<{err : string} | FiregunUser> {
         return new Promise((resolve,reject)=>{
-            this.gun.user().auth(username,password,async (s)=>{
+            this.gun.user().auth(username,password,async (s:any)=>{
                 if ("err" in  s) {
                     if (repeat>0) {
                         await this._timeout(1000);
@@ -386,7 +391,7 @@ export default class Firegun {
             setTimeout(() => {
                 reject({ err : "timeout", ket : `TIMEOUT, Possibly Data : ${path} is corrupt`, data : {}, "#" : path});
             }, 5000);
-            dataGun.once(async (s)=>{
+            dataGun.once(async (s:any)=>{
                 if (s) {
                     s = JSON.parse(JSON.stringify(s));
                     resolve(s);
@@ -511,7 +516,7 @@ export default class Firegun {
                         obj.error.push({ err : Error("TIMEOUT, Failed to put Data"), ok : path});
                         resolve (obj);
                     }, 2000);
-                    dataGun.put(<any>data,(ack)=>{
+                    dataGun.put(<any>data,(ack:any)=>{
                         if (typeof obj === "undefined") {
                             obj = { data: [] , error : []};
                         }
@@ -616,7 +621,7 @@ export default class Firegun {
                 });
 
                 if (cert) {
-                    dataGun.put(randomNode,(s)=>{
+                    dataGun.put(randomNode,(s:any)=>{
                         if (s.err === undefined) {
                             resolve({
                                 data : [{
@@ -640,7 +645,7 @@ export default class Firegun {
                         }
                     })                    
                 } else {
-                    dataGun.put(randomNode,(s)=>{
+                    dataGun.put(randomNode,(s:any)=>{
                         if (s.err === undefined) {
                             resolve({
                                 data : [{

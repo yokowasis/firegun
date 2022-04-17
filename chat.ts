@@ -119,7 +119,7 @@ export default class Chat {
 
     async listen(pubkey : Pubkey, callback:(s:{[x:string] : any})=>void) {
         let date = common.getDate();
-        this.firegun.gun.user().get("chat-with").get(pubkey.pub).get(date.year).get(date.month).get(date.date).map((s)=>{
+        this.firegun.gun.user().get("chat-with").get(pubkey.pub).get(date.year).get(date.month).get(date.date).map((s:any)=>{
             if (s && s.id) {
                 // only listen to future chat
                 if (s.id > `${date.year}.${date.month}.${date.date}T${date.hour}:${date.minutes}:${date.seconds}.${date.miliseconds}`) {
@@ -130,7 +130,7 @@ export default class Chat {
             } else {
                 return null
             }
-        }).once(async (s)=>{
+        }).once(async (s:any)=>{
             if (s && s.id) {
                 s = await this.decryptChat(s,pubkey);
                 if (s)
@@ -153,7 +153,7 @@ export default class Chat {
         this.groupGetMembers(groupkey.owner,groupkey.alias)
         .then(members => {
             members.forEach(async (member) => {
-                this.firegun.gun.get(`~${member.pub}`).get("chat-group-with").get(`${groupkey.owner}&${groupkey.alias}`).get(date.year).get(date.month).get(date.date).map().once(async (s)=>{
+                this.firegun.gun.get(`~${member.pub}`).get("chat-group-with").get(`${groupkey.owner}&${groupkey.alias}`).get(date.year).get(date.month).get(date.date).map().once(async (s:any)=>{
                     if (s) {
                         callback(s);
                         callback(s,member.pub === this.firegun.user.pair.pub);
@@ -236,7 +236,7 @@ export default class Chat {
 
         let members = await this.groupGetMembers(groupkey.owner,groupkey.alias);
         for (const member of members) {
-            this.firegun.gun.get(`~${member.pub}`).get("chat-group-with").get(`${groupkey.owner}&${groupkey.alias}`).get(date.year).get(date.month).get(date.date).map((s)=>{
+            this.firegun.gun.get(`~${member.pub}`).get("chat-group-with").get(`${groupkey.owner}&${groupkey.alias}`).get(date.year).get(date.month).get(date.date).map((s:any)=>{
                 if (s && s.id) {
                     // only listen to future chat
                     if (s.id > `${date.year}.${date.month}.${date.date}T${date.hour}:${date.minutes}:${date.seconds}.${date.miliseconds}`) {
@@ -247,7 +247,7 @@ export default class Chat {
                 } else {
                     return null
                 }    
-            }).once(s=>{
+            }).once((s:any)=>{
                 if (s && s.id) {
                     if (s) {
                         let a = s as chatType;
@@ -266,7 +266,7 @@ export default class Chat {
             .once().map()
             .once().map()
             .once().map()
-            .once(async (s)=>{
+            .once(async (s:any)=>{
                 if (s !== undefined) {
                     if ((typeof s.msg === "string") && (s.msg.search("SEA") === 0))
                     if (s._self) {
