@@ -85,7 +85,13 @@ export default class Firegun {
     g.put(data);
   }
 
-  async On(path, prefix = this.prefix) {
+  /**
+   * 
+   * @param {string} path 
+   * @param {string} prefix 
+   * @param {(s:*)=>void} fn 
+   */
+  async On(path, prefix = this.prefix, fn) {
     const paths = path.split("/");
     /** @type {*} */
     let g = this.gun;
@@ -96,7 +102,7 @@ export default class Firegun {
       g = g.get(p);
     }
     g.on((s) => {
-      console.log(s);
+      fn(s);
     });
   }
 }

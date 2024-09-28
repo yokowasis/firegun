@@ -7,6 +7,18 @@ fg.Put("nama/Wasis", {
   lastName: "Sasoko"
 })
 
-fg.Get("nama/Wasis").then(s => { console.log(s); })
+const listen = [];
 
-fg.On("note/1").then(s => { console.log(s); })
+fg.On("livechat/bimasoft", "", (s) => {
+  /** @type {Object.<string,*>} */
+  const nodelist = s;
+  for (const key in nodelist) {
+    if (!listen.includes(key)) {
+      console.log(key);
+      listen.push(key);
+      fg.gun.get('livechat').get('bimasoft').get(key).on(s2 => {
+        console.log(s2);
+      })
+    }
+  }
+});
