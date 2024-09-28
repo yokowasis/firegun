@@ -84,4 +84,19 @@ export default class Firegun {
     }
     g.put(data);
   }
+
+  async On(path, prefix = this.prefix) {
+    const paths = path.split("/");
+    /** @type {*} */
+    let g = this.gun;
+    if (prefix) {
+      g = g.get(prefix);
+    }
+    for (const p of paths) {
+      g = g.get(p);
+    }
+    g.on((s) => {
+      console.log(s);
+    });
+  }
 }

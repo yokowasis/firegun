@@ -9,6 +9,4 @@ fg.Put("nama/Wasis", {
 
 fg.Get("nama/Wasis").then(s => { console.log(s); })
 
-fg.gun.get("note").get("1").on((s) => {
-  console.log(s);
-})
+fg.On("note/1").then(s => { console.log(s); })
