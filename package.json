@@ -13,6 +13,7 @@
     "firegun"
   ],
   "dependencies": {
+    "express": "^4.21.0",
     "gun": "^0.2020.1240"
   }
 }
