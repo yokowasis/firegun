@@ -10,9 +10,9 @@ import { Firegun } from './index';
 // })
 
 const fg = new Firegun({
-    peers : ["https://gun-relay.bimasoft.web.id:16902/gun"]
+  peers: ["https://gun-relay.bimasoft.web.id:16902/gun"]
 });
 
-(async ()=>{
-    
+(async () => {
+
 })()
