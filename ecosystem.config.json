@@ -1,0 +1,10 @@
+{
+  "apps": [
+    {
+      "name": "gundb:9482",
+      "script": "node server.js",
+      "watch": false,
+      "instances": 1
+    }
+  ]
+}
