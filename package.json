@@ -1,35 +1,18 @@
 {
-    "name": "@yokowasis/firegun",
-    "version": "1.8.10",
-    "description": "gunDB Wrapper for easy access and use.",
-    "license": "MIT",
-    "repository": "yokowasis/firegun",
-    "main": "index.js",
-    "types": "index.ts",
-    "keywords": [
-        "gundb",
-        "npm",
-        "package",
-        "firegun"
-    ],
-    "dependencies": {
-        "@types/eslint-scope": "^3.7.1",
-        "gun": "^0.2020.1235",
-        "node-polyfill-webpack-plugin": "^1.1.4"
-    },
-    "scripts": {
-        "test": "jest --verbose --watch",
-        "ts": "ts-node-dev --respawn --transpile-only",
-        "tsc": "tsc",
-        "tscw": "tsc --watch"
-    },
-    "devDependencies": {
-        "@types/node": "^17.0.24",
-        "jest": "^27.3.1",
-        "ts-loader": "^9.2.6",
-        "ts-node-dev": "^1.1.8",
-        "typescript": "^4.4.4",
-        "webpack": "^5.60.0",
-        "webpack-cli": "^4.9.1"
-    }
+  "name": "@yokowasis/firegun",
+  "version": "1.8.10",
+  "description": "gunDB Wrapper for easy access and use.",
+  "license": "MIT",
+  "repository": "yokowasis/firegun",
+  "main": "index.js",
+  "type": "module",
+  "keywords": [
+    "gundb",
+    "npm",
+    "package",
+    "firegun"
+  ],
+  "dependencies": {
+    "gun": "^0.2020.1240"
+  }
 }

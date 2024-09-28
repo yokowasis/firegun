@@ -4,7 +4,6 @@ test.mjs
 node_modules
 *.txt
 bundle.js
-/*.js
 /*.map
 radata
 radata2
