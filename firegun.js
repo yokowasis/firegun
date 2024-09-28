@@ -1,3 +1,5 @@
+// @ts-check
+
 import Gun from 'gun';
 
 /**
@@ -27,48 +29,11 @@ export default class Firegun {
 
   /**
    * 
-   * @param {{
-   * peers?:string[],
-   * dbname?:string,
-   * localstorage?:boolean,
-   * prefix?:string,
-   * axe?:boolean,
-   * port?:number,
-   * gunInstance?:(import('gun').IGunInstance | null),
-   * }} option 
+   * @param {string} prefix 
+   * @param {string[]} peers 
    */
-  constructor(option) {
-
-    if (option) {
-      option.peers = option.peers || [],
-        option.dbname = option.dbname || "fireDB",
-        option.localstorage = option.localstorage || false,
-        option.prefix = option.prefix || "",
-        option.axe = option.axe || false,
-        option.port = option.port || 8765,
-        option.gunInstance = option.gunInstance || null
-    }
-
-    this.prefix = option?.prefix || "";
-    this.peers = option?.peers || [];
-    this.dbname = option?.dbname || "fireDB";
-
-    if (option?.gunInstance) {
-      this.gun = option.gunInstance;
-    } else {
-      // @ts-ignore
-      this.gun = Gun({
-        file: option?.dbname,
-        localStorage: option?.localstorage,
-        axe: option?.axe,
-        multicast: {
-          port: option?.port
-        },
-        peers: option?.peers
-      })
-    }
-
-    this.gun = Gun();
+  constructor(prefix = "", peers = ["https://ddb.bimasoft.web.id/gun"]) {
+    this.gun = Gun(peers);
   }
 
   /**
@@ -82,7 +47,13 @@ export default class Firegun {
     return new Promise((resolve, reject) => {
 
       const paths = path.split("/");
-      let g = this.gun.get(prefix);
+
+      /** @type {*} */
+      let g = this.gun;
+      if (prefix) {
+        g = g.get(prefix);
+      }
+
       for (const p of paths) {
         g = g.get(p);
       }
@@ -102,7 +73,12 @@ export default class Firegun {
   async Put(path, data, prefix = this.prefix) {
     // a/b/c/d
     const paths = path.split("/");
-    let g = this.gun.get(prefix);
+
+    /** @type {*} */
+    let g = this.gun;
+    if (prefix) {
+      g = g.get(prefix);
+    }
     for (const p of paths) {
       g = g.get(p);
     }
