@@ -12,7 +12,7 @@
 <textarea id="view" placeholder="write here..."></textarea>
 <script src="../../../gun/gun.js"></script>
 <script>
-  gun = GUN('https://ddb.bimasoft.web.id/gun');
+  gun = GUN('/gun');
   note = gun.get('note').get(location.hash.replace('#', '') || 1);
   view.oninput = () => { note.put(view.value) };
   note.on((data) => { view.value = data });
