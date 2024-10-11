@@ -2,7 +2,10 @@ import express from 'express';
 import Gun from 'gun';
 import 'gun/axe.js'
 
-const port = 9482;
+import dotenv from 'dotenv';
+dotenv.config();
+
+const port = process.env.PORT || 9482;
 
 var app = express();
 // @ts-ignore
