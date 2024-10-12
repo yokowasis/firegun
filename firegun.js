@@ -1,15 +1,16 @@
 // @ts-check
 
-import Gun from 'gun';
+import Gun from "gun";
 
 /**
- * 
- * @param {number} length 
+ *
+ * @param {number} length
  * @returns {string}
  */
 function randomAlphaNumeric(length) {
-  var result = '';
-  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var result = "";
+  var characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   var charactersLength = characters.length;
   for (var i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -18,9 +19,8 @@ function randomAlphaNumeric(length) {
 }
 
 export default class Firegun {
-
   /** @type {import('gun').IGunInstance} */
-  gun
+  gun;
 
   prefix = "";
   /** @type {string[]} */
@@ -28,24 +28,23 @@ export default class Firegun {
   dbname = "";
 
   /**
-   * 
-   * @param {string} prefix 
-   * @param {string[]} peers 
+   *
+   * @param {string} prefix
+   * @param {string[]} peers
    */
   constructor(prefix = "", peers = ["https://ddb.bimasoft.web.id/gun"]) {
     this.gun = Gun(peers);
   }
 
   /**
-   * 
-   * @param {string} path 
+   *
+   * @param {string} path
    * @param {number} wait
-   * @param {string} prefix 
+   * @param {string} prefix
    * @returns {Promise<*>}
    */
   async Get(path, wait = 1000, prefix = this.prefix) {
     return new Promise((resolve, reject) => {
-
       const paths = path.split("/");
 
       /** @type {*} */
@@ -58,17 +57,20 @@ export default class Firegun {
         g = g.get(p);
       }
 
-      g.once(async (s) => {
-        resolve(s);
-      }, { wait });
+      g.once(
+        async (s) => {
+          resolve(s);
+        },
+        { wait },
+      );
     });
   }
 
   /**
-   * 
+   *
    * @param {string} path
-   * @param {*} data 
-   * @param {string} prefix 
+   * @param {*} data
+   * @param {string} prefix
    */
   async Put(path, data, prefix = this.prefix) {
     // a/b/c/d
@@ -86,10 +88,10 @@ export default class Firegun {
   }
 
   /**
-   * 
-   * @param {string} path 
-   * @param {string} prefix 
-   * @param {(s:*)=>void} fn 
+   *
+   * @param {string} path
+   * @param {string} prefix
+   * @param {(s:*)=>void} fn
    */
   async On(path, prefix = this.prefix, fn) {
     const paths = path.split("/");
@@ -106,3 +108,4 @@ export default class Firegun {
     });
   }
 }
+

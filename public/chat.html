@@ -1,69 +1,126 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" rel="stylesheet">
-    <link href="./stylechat.css" rel="stylesheet">
-    
-</head>
-<body>   
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+      rel="stylesheet"
+    />
+    <link href="./stylechat.css" rel="stylesheet" />
+  </head>
+  <body>
     <div class="container">
-        <div class="row pt-4">
-            <div class="col">
-                <div class="page-content page-container" id="page-content">
-                    <div class="padding">
-                        <div class="row container d-flex justify-content-center">
-                            <div class="col">
-                                <div class="card card-bordered">
-                                    <div class="card-header">
-                                        <h4 class="card-title"><strong>Chat : <span id="chatTo"></span></strong></h4> <a class="btn btn-xs btn-secondary" href="#" data-abc="true">Let's Chat App</a>
-                                    </div>
-                                    <div class="ps-container ps-theme-default ps-active-y" id="chatMessage" style="overflow-y: scroll !important; height:400px !important;">
-                                    </div>
-                                    <div class="publisher bt-1 border-light"> <img class="avatar avatar-xs" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="..."> <input class="publisher-input" type="text" id="chatmsg" placeholder="Write something"> <span class="publisher-btn file-group"> <i class="fa fa-paperclip file-browser"></i> <input type="file"> </span> <a class="publisher-btn" href="#" data-abc="true"><i class="fa fa-smile"></i></a> <a class="publisher-btn text-info" href="#" data-abc="true" onclick="send()"><i class="fa fa-paper-plane"></i></a> </div>
-                                </div>
-                            </div>
-                        </div>
+      <div class="row pt-4">
+        <div class="col">
+          <div class="page-content page-container" id="page-content">
+            <div class="padding">
+              <div class="row container d-flex justify-content-center">
+                <div class="col">
+                  <div class="card card-bordered">
+                    <div class="card-header">
+                      <h4 class="card-title">
+                        <strong>Chat : <span id="chatTo"></span></strong>
+                      </h4>
+                      <a
+                        class="btn btn-xs btn-secondary"
+                        href="#"
+                        data-abc="true"
+                        >Let's Chat App</a
+                      >
                     </div>
-                </div>
-            </div>
-            <div class="col">
-                <div>
-                    <p>Pilih User</p>
-                    <select class="form-control my-3" id="userLogin">
-                        <option value="user1">user1</option>
-                        <option value="user2">user2</option>
-                        <option value="user3">user3</option>
-                        <option value="user4">user4</option>
-                        <option value="user5">user5</option>
-                    </select>
-                    <p><Button class="btn btn-primary" onClick="login()">Login</Button></p>
-                    <p><Button class="btn btn-primary" id="certBtn" onClick="genAllCert()">Generate Cert</Button></p>
-                </div>
-                <div class="text-start">
-                    <p>User Login : <span id="loggedInUser"></span> </p>
-                </div>
-                <div class="text-start">
-                    <p>Pilih Penerima</p>
-                    <select class="form-control my-3" id="roomname">
-                        <option value="user1">user1</option>
-                        <option value="user2">user2</option>
-                        <option value="user3">user3</option>
-                        <option value="user4">user4</option>
-                        <option value="user5">user5</option>
-                    </select>
-                    <p><Button class="btn btn-primary" onClick="openChat()">Open</Button></p>
-                    <div id="chatMessage">                        
+                    <div
+                      class="ps-container ps-theme-default ps-active-y"
+                      id="chatMessage"
+                      style="
+                        overflow-y: scroll !important;
+                        height: 400px !important;
+                      "
+                    ></div>
+                    <div class="publisher bt-1 border-light">
+                      <img
+                        class="avatar avatar-xs"
+                        src="https://img.icons8.com/color/36/000000/administrator-male.png"
+                        alt="..."
+                      />
+                      <input
+                        class="publisher-input"
+                        type="text"
+                        id="chatmsg"
+                        placeholder="Write something"
+                      />
+                      <span class="publisher-btn file-group">
+                        <i class="fa fa-paperclip file-browser"></i>
+                        <input type="file" />
+                      </span>
+                      <a class="publisher-btn" href="#" data-abc="true"
+                        ><i class="fa fa-smile"></i
+                      ></a>
+                      <a
+                        class="publisher-btn text-info"
+                        href="#"
+                        data-abc="true"
+                        onclick="send()"
+                        ><i class="fa fa-paper-plane"></i
+                      ></a>
                     </div>
+                  </div>
                 </div>
+              </div>
             </div>
+          </div>
         </div>
+        <div class="col">
+          <div>
+            <p>Pilih User</p>
+            <select class="form-control my-3" id="userLogin">
+              <option value="user1">user1</option>
+              <option value="user2">user2</option>
+              <option value="user3">user3</option>
+              <option value="user4">user4</option>
+              <option value="user5">user5</option>
+            </select>
+            <p>
+              <button class="btn btn-primary" onClick="login()">Login</button>
+            </p>
+            <p>
+              <button
+                class="btn btn-primary"
+                id="certBtn"
+                onClick="genAllCert()"
+              >
+                Generate Cert
+              </button>
+            </p>
+          </div>
+          <div class="text-start">
+            <p>User Login : <span id="loggedInUser"></span></p>
+          </div>
+          <div class="text-start">
+            <p>Pilih Penerima</p>
+            <select class="form-control my-3" id="roomname">
+              <option value="user1">user1</option>
+              <option value="user2">user2</option>
+              <option value="user3">user3</option>
+              <option value="user4">user4</option>
+              <option value="user5">user5</option>
+            </select>
+            <p>
+              <button class="btn btn-primary" onClick="openChat()">Open</button>
+            </p>
+            <div id="chatMessage"></div>
+          </div>
+        </div>
+      </div>
     </div>
-    <script src="dist/bundle.js"></script>    
+    <script src="dist/bundle.js"></script>
     <script src="./script.js"></script>
-</body>
+  </body>
 </html>
+
