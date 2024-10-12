@@ -8,9 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="https://pages-github.b-cdn.net/webcomponents/input.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gun/0.2020.1240/gun.min.js" integrity="sha512-DXhMSo4XT1xlS/IsgKbFlUz34Twe8z56oIt+NwVmwmVeN27nXfdZCN35ruF5ZLa8NfTfjugpdLIoFi2DtSyIWA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gun/0.2020.1240/axe.js" integrity="sha512-2IOSn3n0le20q8/BKHvoAPwtcYiAsDh8XumTZvdbjQnh1uD/QBaBdQY20Cx6EckT/+dcT+wveJvyZtljhkjW3g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   </head>
   <body>
     <div class="container-fluid" id="biodata-wrapper">
@@ -33,7 +31,7 @@
             <p class="m-0 text-primary" style="font-weight: bold;" id="visitor-name"></p>
             <p style="font-size: 12px;" id="visitor-phone"></p>
           </div>
-          <div id="chat" style="height: 300px;" class="border mb-1">
+          <div id="chat" style="height: 300px;overflow-y: scroll;" class="border mb-1">
           </div>
           <div id="input-wrapper" class="d-flex">
             <div class="flex-grow-1 mr-1">
@@ -49,7 +47,17 @@
     </div>
 
     <script>
-    const gun = Gun("https://ddb.bimasoft.web.id/gun");
+
+    const db = supabase.createClient(
+      "https://supabase-api.b.app.web.id",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzI4NDg5NjAwLAogICJleHAiOiAxODg2MjU2MDAwCn0.Z0Qi_fL4s-gLFeCkTxp1hTtCHK7Nd26BDj_rNfNc4XU",
+    );
+
+    const scrollDiv = () => {
+      const chat = document.getElementById("chat");
+      chat.scrollTop = chat.scrollHeight;
+    };
+
     const btn = document.getElementById("send-button");
     const btnBio = document.getElementById("save-biodata");
 
@@ -62,14 +70,30 @@
       initChat();
     }
 
-
     btn.onclick = () => {
-      const username = localStorage.getItem("nowa");
+      if (getVal("input") === "") return;
 
+      const username = localStorage.getItem("nowa");
       const msg = `Client : ${getVal("input")}`;
-      gun.get("bimasoft").get("livechat").get(username).set(msg);
+
       setVal("input", "");
+      // setfocus
+      document.getElementById("input-input").focus();
+
+      db.from('livechat').insert({ 
+        from : username,
+        msg
+      })
+        .then(()=>{
+        })
     };
+
+    document.getElementById("input-input").addEventListener("keyup", function(event) {
+      if (event.keyCode === 13) {
+        event.preventDefault();
+        btn.click();
+      }
+    });
 
     btnBio.onclick = () => {
       const nama = getVal("nama");
@@ -82,27 +106,24 @@
     };
 
     function initChat() {
+      console.log("CHAT INIT !");
       const username = localStorage.getItem("nowa");
       const nama = localStorage.getItem("nama");
 
       document.getElementById("visitor-name").innerText = nama;
       document.getElementById("visitor-phone").innerText = username;
 
-      gun
-        .get('bimasoft')
-        .get('livechat-ping')
-        .put(username);
-
-      gun
-        .get("bimasoft")
-        .get("livechat")
-        .get(username)
-        .on(chats => {
+      db
+        .from('livechat')
+        .select()
+        .eq('from', username)
+        .order('created_at', { ascending: true }).limit(100).then(data => {
+          console.log(data);
           document.getElementById("chat").innerHTML = "";
-          for (const key of Object.keys(chats)) {
+          for (const key of Object.keys(data.data)) {
             if (key === "_") continue;
 
-            const msg = chats[key]
+            const msg = data.data[key].msg
             const div = document.createElement("div");
             if (msg.includes("Client : ")) {
               div.className = "border ml-2 my-2 bg-secondary text-white py-1 px-3 rounded w-75";
@@ -113,7 +134,30 @@
             div.innerText = msg.replace("Client : ","").replace("Operator : ","");
             document.getElementById("chat").appendChild(div);
           }
+
+          scrollDiv();
         })
+
+      db.channel('livechat').on('postgres_changes',{
+        schema : 'public',
+        table : 'livechat',
+        event : 'INSERT',
+        filter : `from=eq.${username}`
+      }, (payload) => {
+          const msg = payload.new.msg;
+          const div = document.createElement("div");
+          if (msg.includes("Client : ")) {
+            div.className = "border ml-2 my-2 bg-secondary text-white py-1 px-3 rounded w-75";
+          }
+          if (msg.includes("Operator : ")) {
+            div.className = "border my-2 ml-auto mr-2 bg-primary text-white py-1 px-3 rounded w-75";
+          }
+          div.innerText = msg.replace("Client : ","").replace("Operator : ","");
+          document.getElementById("chat").appendChild(div);
+
+          scrollDiv();
+
+        }).subscribe();
     }
     </script>
   </body>
