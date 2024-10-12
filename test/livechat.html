@@ -88,26 +88,33 @@
       document.getElementById("visitor-name").innerText = nama;
       document.getElementById("visitor-phone").innerText = username;
 
-      gun.get("bimasoft").get("livechat").get(username).on(chats => {
-        document.getElementById("chat").innerHTML = "";
-        for (const key of Object.keys(chats)) {
-          if (key === "_") continue;
+      gun
+        .get('bimasoft')
+        .get('livechat-ping')
+        .put(username);
 
-          const msg = chats[key]
-          const div = document.createElement("div");
-          if (msg.includes("Client : ")) {
-            div.className = "border ml-2 my-2 bg-secondary text-white py-1 px-3 rounded w-75";
-          }
-          if (msg.includes("Operator : ")) {
-            div.className = "border my-2 ml-auto mr-2 bg-primary text-white py-1 px-3 rounded w-75";
-          }
-          div.innerText = msg.replace("Client : ","").replace("Operator : ","");
-          document.getElementById("chat").appendChild(div);
-        }
-      })
+      gun
+        .get("bimasoft")
+        .get("livechat")
+        .get(username)
+        .on(chats => {
+          document.getElementById("chat").innerHTML = "";
+          for (const key of Object.keys(chats)) {
+            if (key === "_") continue;
 
+            const msg = chats[key]
+            const div = document.createElement("div");
+            if (msg.includes("Client : ")) {
+              div.className = "border ml-2 my-2 bg-secondary text-white py-1 px-3 rounded w-75";
+            }
+            if (msg.includes("Operator : ")) {
+              div.className = "border my-2 ml-auto mr-2 bg-primary text-white py-1 px-3 rounded w-75";
+            }
+            div.innerText = msg.replace("Client : ","").replace("Operator : ","");
+            document.getElementById("chat").appendChild(div);
+          }
+        })
     }
-
     </script>
   </body>
 </html>
